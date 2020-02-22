@@ -8,7 +8,7 @@
             "includePath": [
                 "${workspaceRoot}",
                 "C:\\Program Files (x86)\\Arduino\\hardware\\tools\\**",
-                "C:\\Program Files (x86)\\Arduino\\libraries\\**",
+                "C:\\Program Files (x86)\\Arduino\\libraries\\**"
             ],
             "forcedInclude": [],
             "intelliSenseMode": "clang-x64",
