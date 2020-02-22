@@ -1,12 +1,12 @@
 # Vhaus.Tech Algae Body
 Body of electrical hardware to go with the brain software.
-Electrical design based in Eagle. Mechanical design based in Fusion 360.
+Software design based in Visual Studio Code Using Arduino and RaspberryPi 4.
 
 *WORK IN PROGRESS*
 
-## Electrical Design
+## Software 
 ### Setup
-- Clone openag-body repo
+- Clone vhausAlage repo
 - Point eagle program directories at corresponding vhausAlgae repo
 
 ### Projects
