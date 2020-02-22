@@ -7,7 +7,7 @@ Electrical design based in Eagle. Mechanical design based in Fusion 360.
 
 ## Electrical Design
 ### Setup
-- Clone openag-body repo
+- Clone vhausAlgae repo
 - Point eagle program directories at corresponding vhausAlgae repo
 
 ### Projects
