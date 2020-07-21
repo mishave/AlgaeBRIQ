@@ -1,6 +1,5 @@
 {
-    "sketch": "BlinkWithoutDelay.ino",
-    "port": "COM1",
-    "board": "arduino:avr:megaADK",
-    "configuration": null
+    "programmer": "ArduinoISP.org",
+    "board": "arduino:avr:mega",
+    "configuration": "cpu=atmega2560"
 }
