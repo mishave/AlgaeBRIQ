@@ -5,9 +5,9 @@
 VarSpeedServo dumpServo1;
 VarSpeedServo dumpServo2;
 VarSpeedServo harvestServo;
-int dumpServo1Pin = 9;  //input
+int dumpServo1Pin = 11;  //input
 int dumpServo2Pin = 10;  //input
-int harvestServoPin = 11;  //input
+int harvestServoPin = 9;  //input
 byte servoPower = 12;
 int dumpServo1LP = 0;
 int dumpServo2LP = 0;
@@ -34,12 +34,14 @@ unsigned long cycleCurrentMillis;
 unsigned long lastCycleDelay = 0;
 unsigned long cyleDelay = 60000;
 
-int airPowerPin = 13;   //input
+int airPowerPin = 3;   //input
 
 unsigned long pbrWaterLowMillis;
 unsigned long pbrWaterFullMillis;
-const int waterLevelPBR = 2;  //input
-const int waterPumpPBR = 13;  //Output
+const int waterLevelPBR = A1;  //input
+const int waterPumpPBR = 7;  //Output
+
+const int waterPumpChiller = 6;
 
 unsigned long lastPumpOn = 0;
 unsigned long pumpOffDelay = 100;
@@ -59,14 +61,14 @@ unsigned long pHUpcurrentMillis;
 unsigned long pHOffcurrentMillis;
 byte pumpOn = 0;
 
-int lp1_1 = 1;  //input
-int lp1_2 = 1;
-int lp1_3 = 1;
-int lp1_4 = 1;
-int lp2_1 = 1;
-int lp2_2 = 1;
-int lp2_3 = 1;
-int lp2_4 = 1;
+int lp1_1 = 26;  //input
+int lp1_2 = 27;
+int lp1_3 = 28;
+int lp1_4 = 29;
+int lp2_1 = 30;
+int lp2_2 = 31;
+int lp2_3 = 32;
+int lp2_4 = 33;
 unsigned long luxOncurrentMillis;
 unsigned long lastLuxOnDelay = 0;
 unsigned long luxOnDelay = 15000;
@@ -75,9 +77,11 @@ unsigned long lastLuxOffDelay = 0;
 unsigned long luxOffDelay = 15000;
 byte lightingON = 0;
 
-int chillOn = 0;  //input
+int chillOn = 48;  //input
+int chillErr = 46;
+int chillEmpty = 44;
 byte chillState = 0;
-int heatOn = 0;  //input
+int heatOn = 4;  //input
 byte heatState = 0;
 
 //I2C Slave Address
