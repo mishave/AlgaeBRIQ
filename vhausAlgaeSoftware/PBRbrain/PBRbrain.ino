@@ -85,7 +85,7 @@ int heatOn = 4;  //input
 byte heatState = 0;
 
 //I2C Slave Address
-const int brainAdd = 8;
+const int SensorBoardAdd = 8;
 const int DOmeterAdd = 97;
 const int RTDmeterAdd = 102;
 const int PHmeterAdd = 99;
@@ -115,9 +115,6 @@ char Atlasdata[20];
 float ph_data, do_data, rtd_data;
 const int readingDelay = 800;
 
-
-
-
 const size_t capacityIn = JSON_OBJECT_SIZE(58) + 1080;
 DynamicJsonDocument docIn(capacityIn);
 char json[capacityIn];
@@ -141,14 +138,31 @@ float lux_sv_in, lux_pv_in, ph_sv_in, ph_pv_in, do_sv_in, do_pv_in, temp_sv_in, 
       dump2_valve_sv_in, dump2_valve_pv_in;
 long pbr_cycle_length_in, pbr_cycle_remaining_in;
 
+unsigned long EzoMillis;
+unsigned long previousEzoMillis;
+int ezoDelay = 3000;
+
+int sb1 = 0;
+int sb2 = 0;
+int sb3 = 0;
+
+int sb4 = 0;
+int sb5 = 0;
+int sb6 = 0;
+
+int sb7 = 0;
+int sb8 = 0;
+int sb9 = 0;
+
 int startCycleFlag = 0;
 
 void setup() {
   // put your setup code here, to run once:
-  
-  Wire.begin(brainAdd);
+
+  Wire.begin(SensorBoardAdd);
   Wire.onReceive(receiveEvent);
   Wire.onRequest(requestEvent);
+  Serial.begin(9600);
 
   Serial.begin(57600);
 
@@ -201,24 +215,24 @@ void setup() {
 //////////////////////////////////////////////////////////
 void receiveEvent (int howMany) {
   command = Wire.read ();  // remember command for when we get request
-  }
+}
 
 //////////////////////////////////////////////////////////
 //              Handels outgoing data                   //
 //////////////////////////////////////////////////////////
 void requestEvent ()  {
   switch (command)  {
-     //case CMD_SB01:      dumpSB01(); break;  // send 1st Packet 
-     //case CMD_SB02:      dumpSB02(); break;  // send 2nd Packet
-     //case CMD_SB03:      dumpSB03(); break;  // send 3rd Packet
-     }
-  
+      //case CMD_SB01:      dumpSB01(); break;  // send 1st Packet
+      //case CMD_SB02:      dumpSB02(); break;  // send 2nd Packet
+      //case CMD_SB03:      dumpSB03(); break;  // send 3rd Packet
   }
+
+}
 
 void loop() {
   // put your main code here, to run repeatedly:
   RequestSensorBoard();
-  //RequestMeterData();
+  RequestMeterData();
   //mergeDocJSON();
   if (Serial.available() > 0)  {
     RecievePiUpdate();
@@ -277,7 +291,7 @@ void checkTimeRemaining()   {
       remainingCycle = --remainingCycle;
       pbr_cycle_remaining_in = remainingCycle;
     }
-    
+
     if (startCycleFlag == 1 && pbr_cycle_remaining_in == 0) {
       startHarvestFlag = 1;
     }
@@ -478,9 +492,9 @@ void checkLighting()  {
 
 void reportStatus() {
   if (startCycleFlag == 1)  {
-    pbr_status_in = "Dans The Man";
-    pbr_alarm_in = "Fuck Scomo";
-    
+    pbr_status_in = 1;
+    pbr_alarm_in = 2;
+
   }
 }
 
@@ -684,68 +698,68 @@ void sendBack() {
 //                   combined for use                   //
 //////////////////////////////////////////////////////////
 void RequestSensorBoard() {
-  const size_t capacity = JSON_OBJECT_SIZE(3)+20;
+  const size_t capacity = JSON_OBJECT_SIZE(3) + 20;
   DynamicJsonDocument doc(300);
-  if (Wire.requestFrom (brainAdd, capacity) == 0) {
-      //Use to throw an error need to think about this ;/
-      //Serial.println("Sensor Board Error::No reply");
-      }
-    else  {
-      sendCommand (brainAdd, CMD_SB01, capacity);
-      char json[capacity];
-      DynamicJsonDocument doc1(capacity);
-      deserializeJson(doc1, Wire);
-      int sb1 = doc1["s1"]; // 10
-      int sb2 = doc1["s2"]; // 11
-      int sb3 = doc1["s3"]; // 23
-    
-      sendCommand (brainAdd, CMD_SB02, capacity);
-      DynamicJsonDocument doc2(capacity);
-      deserializeJson(doc2, Wire);
-      int sb4 = doc2["s4"]; // 10
-      int sb5 = doc2["s5"]; // 11
-      int sb6 = doc2["s6"]; // 23
-   
-      sendCommand (brainAdd, CMD_SB03, capacity);
-      DynamicJsonDocument doc3(capacity);
-      deserializeJson(doc3, Wire);
-      int sb7 = doc3["s7"]; // 10
-      int sb8 = doc3["s8"]; // 11
-      int sb9 = doc3["s9"]; // 23
-      
-      //Combine messages for use
-      merge(docSen.as<JsonVariant>(), doc1.as<JsonVariant>());
-      merge(docSen.as<JsonVariant>(), doc2.as<JsonVariant>());
-      merge(docSen.as<JsonVariant>(), doc3.as<JsonVariant>());
-      //serializeJsonPretty(doc, Serial);
-    }
- 
+  if (Wire.requestFrom (SensorBoardAdd, capacity) == 0) {
+    //Use to throw an error need to think about this ;/
+    //Serial.println("Sensor Board Error::No reply");
+  }
+  else  {
+    sendCommand (SensorBoardAdd, CMD_SB01, capacity);
+    char json[capacity];
+    DynamicJsonDocument doc1(capacity);
+    deserializeJson(doc1, Wire);
+    sb1 = doc1["s1"]; // 10
+    sb2 = doc1["s2"]; // 11
+    sb3 = doc1["s3"]; // 23
+
+    sendCommand (SensorBoardAdd, CMD_SB02, capacity);
+    DynamicJsonDocument doc2(capacity);
+    deserializeJson(doc2, Wire);
+    sb4 = doc2["s4"]; // 10
+    sb5 = doc2["s5"]; // 11
+    sb6 = doc2["s6"]; // 23
+
+    sendCommand (SensorBoardAdd, CMD_SB03, capacity);
+    DynamicJsonDocument doc3(capacity);
+    deserializeJson(doc3, Wire);
+    sb7 = doc3["s7"]; // 10
+    sb8 = doc3["s8"]; // 11
+    sb9 = doc3["s9"]; // 23
+
+    //Combine messages for use
+    merge(docSen.as<JsonVariant>(), doc1.as<JsonVariant>());
+    merge(docSen.as<JsonVariant>(), doc2.as<JsonVariant>());
+    merge(docSen.as<JsonVariant>(), doc3.as<JsonVariant>());
+    //serializeJsonPretty(doc, Serial);
+  }
+
 }
 
 //////////////////////////////////////////////////////////
 //             Request EZO meter readings               //
 //////////////////////////////////////////////////////////
 void RequestMeterData() {
-  unsigned long currentMillis = millis();
-  if(currentMillis - previousMillis > interval) {
-    previousMillis = currentMillis;
+  EzoMillis = millis();
+  if (EzoMillis - previousEzoMillis > ezoDelay) {
+    previousEzoMillis = EzoMillis;
     sendCommand(PHmeterAdd, 'r', 20);
     delay(readingDelay);                                  //if it is the sleep command, we do nothing. Issuing a sleep command and then requesting data will wake the RTD circuit.
     ph_data = readMeter(PHmeterAdd, 20, 1);
-  
+
     sendCommand(RTDmeterAdd, 'r', 20);
     delay(readingDelay);                                  //if it is the sleep command, we do nothing. Issuing a sleep command and then requesting data will wake the RTD circuit.
     rtd_data = readMeter(RTDmeterAdd, 20, 1);
-  
+
     sendCommand(DOmeterAdd, 'r', 20);
     delay(readingDelay);                                  //if it is the sleep command, we do nothing. Issuing a sleep command and then requesting data will wake the RTD circuit.
     do_data = readMeter(DOmeterAdd, 20, 1);
-    if(ph_data!=0){
-    //Serial.println(ph_data);              //print the data.
+    if (ph_data != 0) {
+      //Serial.println(ph_data);              //print the data.
     }
 
   }
-  
+
 }
 
 //////////////////////////////////////////////////////////
@@ -756,8 +770,8 @@ float readMeter(const int WireAdd, const int cmd, const int responseSize)  {
   byte i = 0;
   Wire.requestFrom(WireAdd, cmd, responseSize);  //call the circuit and request 20 bytes (this may be more than we need)
   int code = Wire.read();
-  
-  while (Wire.available()) {  
+
+  while (Wire.available()) {
     byte in_char = Wire.read();
     dataStorage[i] = in_char;           //load byte into our array.
     i += 1;                             //next bit.
@@ -777,12 +791,12 @@ void sendCommand (const int WireAdd, const byte cmd, const int responseSize)  {
   Wire.beginTransmission (WireAdd);
   Wire.write (cmd);
   Wire.endTransmission ();
-  
-  if (WireAdd!=PHmeterAdd){
+
+  if (WireAdd != PHmeterAdd) {
     Wire.requestFrom (WireAdd, responseSize);
   }
 }
-  
+
 //////////////////////////////////////////////////////////
 //              Merge JSON messages                     //
 /////////////////////////////////////////////////////////
