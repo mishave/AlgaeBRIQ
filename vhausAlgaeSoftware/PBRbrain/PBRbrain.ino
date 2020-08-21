@@ -85,7 +85,7 @@ int heatOn = 4;  //input
 byte heatState = 0;
 
 //I2C Slave Address
-const int SensorBoardAdd = 8;
+const int brainAdd = 8;
 const int DOmeterAdd = 97;
 const int RTDmeterAdd = 102;
 const int PHmeterAdd = 99;
@@ -122,6 +122,10 @@ const size_t capacityIn = JSON_OBJECT_SIZE(58) + 1080;
 DynamicJsonDocument docIn(capacityIn);
 char json[capacityIn];
 DynamicJsonDocument docOut(capacityIn);
+DynamicJsonDocument docSen(capacityIn);
+DynamicJsonDocument doc1(capacityIn);
+DynamicJsonDocument doc2(capacityIn);
+DynamicJsonDocument doc3(capacityIn);
 
 byte pbr_auto_man_in, pbr_start_stop_in, light_auto_man_in, light_panel_1_in, lp1_1_in, lp1_2_in,
      lp1_3_in, lp1_4_in, light_panel_2_in, lp2_1_in, lp2_2_in, lp2_3_in, lp2_4_in, temp_auto_man_in,
@@ -141,10 +145,8 @@ int startCycleFlag = 0;
 
 void setup() {
   // put your setup code here, to run once:
-  Wire.begin(SensorBoardAdd);
-  Wire.begin(DOmeterAdd);
-  Wire.begin(RTDmeterAdd);
-  Wire.begin(PHmeterAdd);
+  
+  Wire.begin(brainAdd);
   Wire.onReceive(receiveEvent);
   Wire.onRequest(requestEvent);
 
@@ -215,7 +217,7 @@ void requestEvent ()  {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  //RequestSensorBoard();
+  RequestSensorBoard();
   //RequestMeterData();
   //mergeDocJSON();
   if (Serial.available() > 0)  {
@@ -499,24 +501,40 @@ void manualControl() {
 
   if (light_auto_man_in == 0) {
     if (light_panel_1_in == 1) {
+      digitalWrite(lp1_1, HIGH);
+      digitalWrite(lp1_2, HIGH);
+      digitalWrite(lp1_3, HIGH);
+      digitalWrite(lp1_4, HIGH);
       lp1_1_in = 1;
       lp1_2_in = 1;
       lp1_3_in = 1;
       lp1_4_in = 1;
     }
     if (light_panel_2_in == 1) {
+      digitalWrite(lp2_1, HIGH);
+      digitalWrite(lp2_2, HIGH);
+      digitalWrite(lp2_3, HIGH);
+      digitalWrite(lp2_4, HIGH);
       lp2_1_in = 1;
       lp2_2_in = 1;
       lp2_3_in = 1;
       lp2_4_in = 1;
     }
     if (light_panel_1_in == 0) {
+      digitalWrite(lp1_1, LOW);
+      digitalWrite(lp1_2, LOW);
+      digitalWrite(lp1_3, LOW);
+      digitalWrite(lp1_4, LOW);
       lp1_1_in = 0;
       lp1_2_in = 0;
       lp1_3_in = 0;
       lp1_4_in = 0;
     }
     if (light_panel_2_in == 0) {
+      digitalWrite(lp2_1, LOW);
+      digitalWrite(lp2_2, LOW);
+      digitalWrite(lp2_3, LOW);
+      digitalWrite(lp2_4, LOW);
       lp2_1_in = 0;
       lp2_2_in = 0;
       lp2_3_in = 0;
@@ -628,13 +646,13 @@ void sendBack() {
   docOut["pbr_cycle_length"] = pbr_cycle_length_in;
   docOut["pbr_cycle_remaining"] = pbr_cycle_remaining_in;
   docOut["lux_sv"] = lux_sv_in;
-  docOut["lux_pv"] = lux_pv_in;
+  docOut["lux_pv"] = sb4;
   docOut["ph_sv"] = ph_sv_in;
-  docOut["ph_pv"] = ph_pv_in;
+  docOut["ph_pv"] = sb1;
   docOut["do_sv"] = do_sv_in;
-  docOut["do_pv"] = do_pv_in;
+  docOut["do_pv"] = sb3;
   docOut["temp_sv"] = temp_sv_in;
-  docOut["temp_pv"] = temp_pv_in;
+  docOut["temp_pv"] = sb2;
   docOut["turbity_sv"] = turbity_sv_in;
   docOut["turbity_pv"] = turbity_pv_in;
   docOut["coil1_sv"] = coil1_sv_in;
@@ -646,7 +664,7 @@ void sendBack() {
   docOut["co2_in_sv"] = co2_in_sv_in;
   docOut["co2_in_pv"] = co2_in_pv_in;
   docOut["co2_out_sv"] = co2_out_sv_in;
-  docOut["co2_out_pv"] = co2_out_pv_in;
+  docOut["co2_out_pv"] = sb7;
   docOut["pressure_sv"] = pressure_sv_in;
   docOut["pressure_pv"] = pressure_pv_in;
   docOut["press_valve_sv"] = press_valve_sv_in;
@@ -668,12 +686,12 @@ void sendBack() {
 void RequestSensorBoard() {
   const size_t capacity = JSON_OBJECT_SIZE(3)+20;
   DynamicJsonDocument doc(300);
-  if (Wire.requestFrom (SensorBoardAdd, capacity) == 0) {
+  if (Wire.requestFrom (brainAdd, capacity) == 0) {
       //Use to throw an error need to think about this ;/
       //Serial.println("Sensor Board Error::No reply");
       }
     else  {
-      sendCommand (SensorBoardAdd, CMD_SB01, capacity);
+      sendCommand (brainAdd, CMD_SB01, capacity);
       char json[capacity];
       DynamicJsonDocument doc1(capacity);
       deserializeJson(doc1, Wire);
@@ -681,14 +699,14 @@ void RequestSensorBoard() {
       int sb2 = doc1["s2"]; // 11
       int sb3 = doc1["s3"]; // 23
     
-      sendCommand (SensorBoardAdd, CMD_SB02, capacity);
+      sendCommand (brainAdd, CMD_SB02, capacity);
       DynamicJsonDocument doc2(capacity);
       deserializeJson(doc2, Wire);
       int sb4 = doc2["s4"]; // 10
       int sb5 = doc2["s5"]; // 11
       int sb6 = doc2["s6"]; // 23
    
-      sendCommand (SensorBoardAdd, CMD_SB03, capacity);
+      sendCommand (brainAdd, CMD_SB03, capacity);
       DynamicJsonDocument doc3(capacity);
       deserializeJson(doc3, Wire);
       int sb7 = doc3["s7"]; // 10
@@ -696,9 +714,9 @@ void RequestSensorBoard() {
       int sb9 = doc3["s9"]; // 23
       
       //Combine messages for use
-      merge(doc.as<JsonVariant>(), doc1.as<JsonVariant>());
-      merge(doc.as<JsonVariant>(), doc2.as<JsonVariant>());
-      merge(doc.as<JsonVariant>(), doc3.as<JsonVariant>());
+      merge(docSen.as<JsonVariant>(), doc1.as<JsonVariant>());
+      merge(docSen.as<JsonVariant>(), doc2.as<JsonVariant>());
+      merge(docSen.as<JsonVariant>(), doc3.as<JsonVariant>());
       //serializeJsonPretty(doc, Serial);
     }
  
