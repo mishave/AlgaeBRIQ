@@ -25,10 +25,7 @@ float ph_data, do_data, rtd_data;
 const int readingDelay = 800;
 
 void setup(){
-  Wire.begin(SensorBoardAdd);
-  Wire.begin(DOmeterAdd);
-  Wire.begin(RTDmeterAdd);
-  Wire.begin(PHmeterAdd);
+  Wire.begin();
   Wire.onReceive(receiveEvent);
   Wire.onRequest(requestEvent);
   Serial.begin(9600);
@@ -80,7 +77,12 @@ void dumpSB03(){
 }
 
 void loop(){
-  RequestMeterData();
+  
+  RequestMeterData(PHmeterAdd, ph_data);
+  
+  RequestMeterData(RTDmeterAdd, rtd_data);
+  
+  RequestMeterData(DOmeterAdd, do_data);
   //ReadTempHumidity();
   //ReadLux();
   //ReadCO2();
@@ -90,14 +92,14 @@ void loop(){
 /////////////////////////////////////////////////////////
 //             Request EZO meter readings               //
 //////////////////////////////////////////////////////////
-void RequestMeterData() {
-  currentMillis = millis();
-  if(currentMillis - previousMillis > interval) {
+float RequestMeterData(const int ezoAdd, float ezoReading) {
+  //currentMillis = millis();
+  //if(currentMillis - previousMillis > interval) {
     previousMillis = currentMillis;
-    sendCommand(PHmeterAdd, 'r', 20);
+    sendCommand(ezoAdd, 'r', 20);
     delay(readingDelay);                                  //if it is the sleep command, we do nothing. Issuing a sleep command and then requesting data will wake the RTD circuit.
-    ph_data = readMeter(PHmeterAdd, 20, 1);
-  
+    ezoReading = readMeter(ezoAdd, 20, 1);
+  /*
     sendCommand(RTDmeterAdd, 'r', 20);
     delay(readingDelay);                                  //if it is the sleep command, we do nothing. Issuing a sleep command and then requesting data will wake the RTD circuit.
     rtd_data = readMeter(RTDmeterAdd, 20, 1);
@@ -106,10 +108,10 @@ void RequestMeterData() {
     delay(readingDelay);                                  //if it is the sleep command, we do nothing. Issuing a sleep command and then requesting data will wake the RTD circuit.
     do_data = readMeter(DOmeterAdd, 20, 1);
     if(ph_data!=0){
-    //Serial.println(ph_data);              //print the data.
+    Serial.println(ph_data);              //print the data.
     }
 
-  }
+  //}*/
   
 }
 

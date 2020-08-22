@@ -85,6 +85,7 @@ int heatOn = 4;  //input
 byte heatState = 0;
 
 //I2C Slave Address
+const int BrainAdd = 3;
 const int SensorBoardAdd = 8;
 const int DOmeterAdd = 97;
 const int RTDmeterAdd = 102;
@@ -119,10 +120,6 @@ const size_t capacityIn = JSON_OBJECT_SIZE(58) + 1080;
 DynamicJsonDocument docIn(capacityIn);
 char json[capacityIn];
 DynamicJsonDocument docOut(capacityIn);
-DynamicJsonDocument docSen(capacityIn);
-DynamicJsonDocument doc1(capacityIn);
-DynamicJsonDocument doc2(capacityIn);
-DynamicJsonDocument doc3(capacityIn);
 
 byte pbr_auto_man_in, pbr_start_stop_in, light_auto_man_in, light_panel_1_in, lp1_1_in, lp1_2_in,
      lp1_3_in, lp1_4_in, light_panel_2_in, lp2_1_in, lp2_2_in, lp2_3_in, lp2_4_in, temp_auto_man_in,
@@ -159,10 +156,9 @@ int startCycleFlag = 0;
 void setup() {
   // put your setup code here, to run once:
 
-  Wire.begin(SensorBoardAdd);
+  Wire.begin(BrainAdd);
   Wire.onReceive(receiveEvent);
-  Wire.onRequest(requestEvent);
-  Serial.begin(9600);
+  //Wire.onRequest(requestEvent);
 
   Serial.begin(57600);
 
@@ -698,30 +694,30 @@ void sendBack() {
 //                   combined for use                   //
 //////////////////////////////////////////////////////////
 void RequestSensorBoard() {
-  const size_t capacity = JSON_OBJECT_SIZE(3) + 20;
-  DynamicJsonDocument doc(300);
-  if (Wire.requestFrom (SensorBoardAdd, capacity) == 0) {
+  const size_t capacitySen = JSON_OBJECT_SIZE(3) + 20;
+  DynamicJsonDocument docSen(300);
+  if (Wire.requestFrom (SensorBoardAdd, capacitySen) == 0) {
     //Use to throw an error need to think about this ;/
     //Serial.println("Sensor Board Error::No reply");
   }
   else  {
-    sendCommand (SensorBoardAdd, CMD_SB01, capacity);
-    char json[capacity];
-    DynamicJsonDocument doc1(capacity);
+    sendCommand (SensorBoardAdd, CMD_SB01, capacitySen);
+    char json[capacitySen];
+    DynamicJsonDocument doc1(capacitySen);
     deserializeJson(doc1, Wire);
     sb1 = doc1["s1"]; // 10
     sb2 = doc1["s2"]; // 11
     sb3 = doc1["s3"]; // 23
 
-    sendCommand (SensorBoardAdd, CMD_SB02, capacity);
-    DynamicJsonDocument doc2(capacity);
+    sendCommand (SensorBoardAdd, CMD_SB02, capacitySen);
+    DynamicJsonDocument doc2(capacitySen);
     deserializeJson(doc2, Wire);
     sb4 = doc2["s4"]; // 10
     sb5 = doc2["s5"]; // 11
     sb6 = doc2["s6"]; // 23
 
-    sendCommand (SensorBoardAdd, CMD_SB03, capacity);
-    DynamicJsonDocument doc3(capacity);
+    sendCommand (SensorBoardAdd, CMD_SB03, capacitySen);
+    DynamicJsonDocument doc3(capacitySen);
     deserializeJson(doc3, Wire);
     sb7 = doc3["s7"]; // 10
     sb8 = doc3["s8"]; // 11
