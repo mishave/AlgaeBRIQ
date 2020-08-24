@@ -19,11 +19,6 @@ const char *rtdSen = "rtd_pv";  // Topic to subcribe to
 const char *doSen = "do_pv";  // Topic to subcribe to
 
 
-
-
-
-
-
 bool state = 0;
 String switch1;
 String strTopic;
