@@ -15,7 +15,7 @@ const char *HA_USER = "vhausTech";
 const char *HA_PASS = "vhaus";
 
 //Node ID
-const char *ID = "brainESP32";  // Name of our device, must be unique
+const char *ID = "sensorESP32";  // Name of our device, must be unique
 
 int pbrAM, pbrSS, lightAM,
     lp1, lp1_1, lp1_2, lp1_3, lp1_4,
@@ -186,8 +186,7 @@ void reconnect() {
       client.subscribe("pbr/topUp/switch");
 
       client.subscribe("pbr/harvestAM/switch");
-      client.subscribe("pbr/harbestSS/switch");
-
+      client.subscribe("brainOutSV1");
     }
     else {
       Serial.print("failed, rc=");
@@ -259,7 +258,7 @@ void packetUpDate() {
   doc1["presPV"] = presPV;
   char buffer[256];
   size_t n = serializeJson(doc1, buffer);
-  client.publish("brainOutPV1", buffer, n);
+  client.publish("sensorOutPV1", buffer, n);
   doc2["luxSV"] = luxSV;
   doc2["phSV"] = phSV;
   doc2["doSV"] = doSV;
@@ -269,5 +268,5 @@ void packetUpDate() {
   doc2["co2OutSV"] = co2OutSV;
   doc2["presSV"] = presSV;
   n = serializeJson(doc2, buffer);
-  client.publish("brainOutSV1", buffer, n);
+  client.publish("sensorOutSV1", buffer, n);
 }
