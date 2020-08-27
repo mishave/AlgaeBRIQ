@@ -109,16 +109,7 @@ void setup_wifi() {
 
 
 void loop() {
-  if (!client.connected()) {
-    reconnect();
-  }
-  client.loop();
 
-  updateCurrentMillis = millis(); //send update every x seconds
-  if (updateCurrentMillis - lastUpdateDelay >= updateDelay) {
-    lastUpdateDelay = updateCurrentMillis;
-    packetUpDate();  //dump data
-  }
   while (Serial2.available()) {
     const size_t capacity = JSON_OBJECT_SIZE(8) + 90;
     DynamicJsonDocument doc(capacity);
@@ -132,8 +123,16 @@ void loop() {
     co2InPV = doc["co2InPV"]; // 0
     co2OutPV = doc["co2OutPV"]; // 0
     presPV = doc["presPV"]; // 0
-    serializeJson(doc, Serial);
-    Serial.println();
+  }
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+  
+  updateCurrentMillis = millis(); //send update every x seconds
+  if (updateCurrentMillis - lastUpdateDelay >= updateDelay) {
+    lastUpdateDelay = updateCurrentMillis;
+    packetUpDate();  //dump data
   }
 }
 

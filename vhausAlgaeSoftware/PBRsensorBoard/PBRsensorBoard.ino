@@ -3,7 +3,7 @@
 #include <SoftwareSerial.h>
 
 SoftwareSerial softSerial(8, 7); // RX, TX
-float luxPV=21.3, phPV=14.02, doPV, tempPV, TurbPV, co2InPV, co2OutPV, presPV;
+float luxPV, phPV, doPV, tempPV, TurbPV, co2InPV, co2OutPV, presPV;
 //I2C Slave Address
 const int SensorBoardAdd = 8;
 const int DOmeterAdd = 97;
@@ -37,9 +37,9 @@ void setup() {
 
 void loop() {
 
-  RequestMeterData(PHmeterAdd, ph_data);
-  RequestMeterData(RTDmeterAdd, rtd_data);
-  RequestMeterData(DOmeterAdd, do_data);
+  ph_data = RequestMeterData(PHmeterAdd);
+  rtd_data = RequestMeterData(RTDmeterAdd);
+  do_data = RequestMeterData(DOmeterAdd);
   updateESP();
   //ReadTempHumidity();
   //ReadLux();
@@ -60,19 +60,22 @@ void updateESP() {
     doc["co2OutPV"] = co2OutPV;
     doc["presPV"] = presPV;
     serializeJson(doc, softSerial);
+    Serial.println(ph_data);
   }
 }
 
 /////////////////////////////////////////////////////////
 //             Request EZO meter readings               //
 //////////////////////////////////////////////////////////
-float RequestMeterData(const int ezoAdd, float ezoReading) {
+float RequestMeterData(const int ezoAdd) {
   //currentMillis = millis();
   //if(currentMillis - previousMillis > interval) {
+  float ezoReading;
   previousMillis = currentMillis;
   sendCommand(ezoAdd, 'r', 20);
   delay(readingDelay);                                  //if it is the sleep command, we do nothing. Issuing a sleep command and then requesting data will wake the RTD circuit.
-  ezoReading = readMeter(ezoAdd, 20, 1);
+  return ezoReading = readMeter(ezoAdd, 20, 1);
+  
 }
 
 //////////////////////////////////////////////////////////
