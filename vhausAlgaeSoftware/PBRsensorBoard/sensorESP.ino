@@ -3,6 +3,9 @@
 #include <PubSubClient.h>
 #include <WiFiManager.h>
 
+#define RXD2 16
+#define TXD2 17
+
 unsigned long updateCurrentMillis;
 unsigned long lastUpdateDelay;
 unsigned long updateDelay = 1000;
@@ -23,7 +26,7 @@ int pbrAM, pbrSS, lightAM,
     chillAM, chillSS, airAM, airSS,
     doseAM, phUp, phDown, nutMix, samplePump, topUp,
     harvestAM, harbestSS;
-    
+
 float luxPV, phPV, doPV, tempPV, TurbPV, co2InPV, co2OutPV, presPV;
 float luxSV, phSV, doSV, tempSV, TurbSV, co2InSV, co2OutSV, presSV;
 
@@ -42,107 +45,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     if (payloadStr == "ON") client.publish("pbr/pbrAM/status", "ON"), pbrAM = 1;
     else if (payloadStr == "OFF") client.publish("pbr/pbrAM/status", "OFF"), pbrAM = 0;
   }
-  if (topicStr == "pbr/pbrSS/switch") {
-    if (payloadStr == "ON") client.publish("pbr/pbrSS/status", "ON"), pbrSS = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/pbrSS/status", "OFF"), pbrSS = 0;
-  }
 
-  if (topicStr == "pbr/lightAM/switch") {
-    if (payloadStr == "ON") client.publish("pbr/lightAM/status", "ON"), lightAM = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/lightAM/status", "OFF"), lightAM = 0;
-  }
-  if (topicStr == "pbr/lp1/switch") {
-    if (payloadStr == "ON") client.publish("pbr/lp1/status", "ON"), lp1 = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/lp1/status", "OFF"), lp1 = 0;
-  }
-  if (topicStr == "pbr/lp1_1/switch") {
-    if (payloadStr == "ON") client.publish("pbr/lp1_1/status", "ON"), lp1_1 = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/lp1_1/status", "OFF"), lp1_1 = 0;
-  }
-  if (topicStr == "pbr/lp1_2/switch") {
-    if (payloadStr == "ON") client.publish("pbr/lp1_2/status", "ON"), lp1_2 = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/lp1_2/status", "OFF"), lp1_2 = 0;
-  }
-  if (topicStr == "pbr/lp1_3/switch") {
-    if (payloadStr == "ON") client.publish("pbr/lp1_3/status", "ON"), lp1_3 = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/lp1_3/status", "OFF"), lp1_3 = 0;
-  }
-  if (topicStr == "pbr/lp1_4/switch") {
-    if (payloadStr == "ON") client.publish("pbr/lp1_4/status", "ON"), lp1_4 = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/lp1_4/status", "OFF"), lp1_4 = 0;
-  }
-  if (topicStr == "pbr/lp2/switch") {
-    if (payloadStr == "ON") client.publish("pbr/lp2/status", "ON"), lp2 = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/lp2/status", "OFF"), lp2 = 0;
-  }
-  if (topicStr == "pbr/lp2_1/switch") {
-    if (payloadStr == "ON") client.publish("pbr/lp2_1/status", "ON"), lp2_1 = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/lp2_1/status", "OFF"), lp2_1 = 0;
-  }
-  if (topicStr == "pbr/lp2_2/switch") {
-    if (payloadStr == "ON") client.publish("pbr/lp2_2/status", "ON"), lp2_2 = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/lp2_2/status", "OFF"), lp2_2 = 0;
-  }
-  if (topicStr == "pbr/lp2_3/switch") {
-    if (payloadStr == "ON") client.publish("pbr/lp2_3/status", "ON"), lp2_3 = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/lp2_3/status", "OFF"), lp2_3 = 0;
-  }
-  if (topicStr == "pbr/lp2_4/switch") {
-    if (payloadStr == "ON") client.publish("pbr/lp2_4/status", "ON"), lp2_4 = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/lp2_4/status", "OFF"), lp2_4 = 0;
-  }
-
-  if (topicStr == "pbr/chillAM/switch") {
-    if (payloadStr == "ON") client.publish("pbr/chillAM/status", "ON"), chillAM = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/chillAM/status", "OFF"), chillAM = 0;
-  }
-  if (topicStr == "pbr/chillSS/switch") {
-    if (payloadStr == "ON") client.publish("pbr/chillSS/status", "ON"), chillSS = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/chillSS/status", "OFF"), chillSS = 0;
-  }
-
-  if (topicStr == "pbr/airAM/switch") {
-    if (payloadStr == "ON") client.publish("pbr/airAM/status", "ON"), airAM = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/airAM/status", "OFF"), airAM = 0;
-  }
-  if (topicStr == "pbr/airSS/switch") {
-    if (payloadStr == "ON") client.publish("pbr/airSS/status", "ON"), airSS = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/airSS/status", "OFF"), airSS = 0;
-  }
-
-  if (topicStr == "pbr/doseAM/switch") {
-    if (payloadStr == "ON") client.publish("pbr/doseAM/status", "ON"), doseAM = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/doseAM/status", "OFF"), doseAM = 0;
-  }
-  if (topicStr == "pbr/phUp/switch") {
-    if (payloadStr == "ON") client.publish("pbr/phUp/status", "ON"), phUp = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/phUp/status", "OFF"), phUp = 0;
-  }
-  if (topicStr == "pbr/phDown/switch") {
-    if (payloadStr == "ON") client.publish("pbr/phDown/status", "ON"), phDown = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/phDown/status", "OFF"), phDown = 0;
-  }
-  if (topicStr == "pbr/nutMix/switch") {
-    if (payloadStr == "ON") client.publish("pbr/nutMix/status", "ON"), nutMix = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/nutMix/status", "OFF"), nutMix = 0;
-  }
-  if (topicStr == "pbr/samplePump/switch") {
-    if (payloadStr == "ON") client.publish("pbr/samplePump/status", "ON"), samplePump = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/samplePump/status", "OFF"), samplePump = 0;
-  }
-  if (topicStr == "pbr/topUp/switch") {
-    if (payloadStr == "ON") client.publish("pbr/topUp/status", "ON"), topUp = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/topUp/status", "OFF"), topUp = 0;
-  }
-
-  if (topicStr == "pbr/harvestAM/switch") {
-    if (payloadStr == "ON") client.publish("pbr/harvestAM/status", "ON"), harvestAM = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/harvestAM/status", "OFF"), harvestAM = 0;
-  }
-  if (topicStr == "pbr/harbestSS/switch") {
-    if (payloadStr == "ON") client.publish("pbr/harbestSS/status", "ON"), harbestSS = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/harbestSS/status", "OFF"), harbestSS = 0;
-  }
 }
 
 // Reconnect to client
@@ -157,36 +60,7 @@ void reconnect() {
       client.publish("outTopic", "hello world");
       //subscribe to topics
       //Switches
-      client.subscribe("pbr/pbrAM/switch");
-      client.subscribe("pbr/pbrSS/switch");
-
-      client.subscribe("pbr/lightAM/switch");
-      client.subscribe("pbr/lp1/switch");
-      client.subscribe("pbr/lp1_1/switch");
-      client.subscribe("pbr/lp1_2/switch");
-      client.subscribe("pbr/lp1_3/switch");
-      client.subscribe("pbr/lp1_4/switch");
-      client.subscribe("pbr/lp2/switch");
-      client.subscribe("pbr/lp2_1/switch");
-      client.subscribe("pbr/lp2_2/switch");
-      client.subscribe("pbr/lp2_3/switch");
-      client.subscribe("pbr/lp2_4/switch");
-
-      client.subscribe("pbr/chillAM/switch");
-      client.subscribe("pbr/chillSS/switch");
-
-      client.subscribe("pbr/airAM/switch");
-      client.subscribe("pbr/airSS/switch");
-
-      client.subscribe("pbr/doseAM/switch");
-      client.subscribe("pbr/phUp/switch");
-      client.subscribe("pbr/phDown/switch");
-      client.subscribe("pbr/nutMix/switch");
-      client.subscribe("pbr/samplePump/switch");
-      client.subscribe("pbr/topUp/switch");
-
-      client.subscribe("pbr/harvestAM/switch");
-      client.subscribe("brainOutSV1");
+      //client.subscribe("brainOutSV1");
     }
     else {
       Serial.print("failed, rc=");
@@ -200,6 +74,9 @@ void reconnect() {
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
+  Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
+  Serial.println("Serial Txd is on pin: " + String(TX));
+  Serial.println("Serial Rxd is on pin: " + String(RX));
 
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
@@ -241,6 +118,22 @@ void loop() {
   if (updateCurrentMillis - lastUpdateDelay >= updateDelay) {
     lastUpdateDelay = updateCurrentMillis;
     packetUpDate();  //dump data
+  }
+  while (Serial2.available()) {
+    const size_t capacity = JSON_OBJECT_SIZE(8) + 90;
+    DynamicJsonDocument doc(capacity);
+    const char* json[capacity];
+    deserializeJson(doc, Serial2);
+    luxPV = doc["luxPV"]; // 21.3
+    phPV = doc["phPV"]; // 14.02
+    doPV = doc["doPV"]; // 0
+    tempPV = doc["tempPV"]; // 0
+    TurbPV = doc["TurbPV"]; // 0
+    co2InPV = doc["co2InPV"]; // 0
+    co2OutPV = doc["co2OutPV"]; // 0
+    presPV = doc["presPV"]; // 0
+    serializeJson(doc, Serial);
+    Serial.println();
   }
 }
 

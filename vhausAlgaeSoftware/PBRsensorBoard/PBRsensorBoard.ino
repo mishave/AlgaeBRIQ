@@ -1,6 +1,9 @@
 #include <Wire.h>
 #include <ArduinoJson.h>
+#include <SoftwareSerial.h>
 
+SoftwareSerial softSerial(8, 7); // RX, TX
+float luxPV=21.3, phPV=14.02, doPV, tempPV, TurbPV, co2InPV, co2OutPV, presPV;
 //I2C Slave Address
 const int SensorBoardAdd = 8;
 const int DOmeterAdd = 97;
@@ -15,78 +18,49 @@ char input[1200];
 // I2C Commands
 char command = 0;
 enum {
-    CMD_SB01 = 11,
-    CMD_SB02 = 12,
-    CMD_SB03 = 13
-    };
+  CMD_SB01 = 11,
+  CMD_SB02 = 12,
+  CMD_SB03 = 13
+};
 
 char Atlasdata[20];
 float ph_data, do_data, rtd_data;
 const int readingDelay = 800;
 
-void setup(){
+void setup() {
   Wire.begin();
-  Wire.onReceive(receiveEvent);
-  Wire.onRequest(requestEvent);
-  Serial.begin(9600);
+  Serial.begin(115200);
+  softSerial.begin(9600);
 }
 //////////////////////////////////////////////////////////
 //              Handles incoming data                   //
-//////////////////////////////////////////////////////////
-void receiveEvent (int howMany)
-  {
-  command = Wire.read ();  // remember command for when we get request
-  }
 
-//////////////////////////////////////////////////////////
-//              Handels outgoing data                   //
-//////////////////////////////////////////////////////////
-void requestEvent ()  {
-  switch (command)  {
-     case CMD_SB01:      dumpSB01(); break;  // send 1st Packet 
-     case CMD_SB02:      dumpSB02(); break;  // send 2nd Packet
-     case CMD_SB03:      dumpSB03(); break;  // send 3rd Packet
-     }
-  }
-  
-void dumpSB01(){  
-  const size_t capacity = JSON_OBJECT_SIZE(3);
-  DynamicJsonDocument doc1(capacity);
-  doc1["s1"] = ph_data;
-  doc1["s2"] = rtd_data;
-  doc1["s3"] = do_data;
-  serializeJson(doc1, Wire);
-}
+void loop() {
 
-void dumpSB02(){  
-  const size_t capacity = JSON_OBJECT_SIZE(3);
-  DynamicJsonDocument doc2(capacity);
-  doc2["s4"] = 150;
-  doc2["s5"] = 20.6;
-  doc2["s6"] = 18.3;
-  serializeJson(doc2, Wire);
-}
-
-void dumpSB03(){  
-  const size_t capacity = JSON_OBJECT_SIZE(3);
-  DynamicJsonDocument doc3(capacity);
-  doc3["s7"] = 1200;
-  doc3["s8"] = 20.3;
-  doc3["s9"] = 2214;
-  serializeJson(doc3, Wire);
-}
-
-void loop(){
-  
   RequestMeterData(PHmeterAdd, ph_data);
-  
   RequestMeterData(RTDmeterAdd, rtd_data);
-  
   RequestMeterData(DOmeterAdd, do_data);
+  updateESP();
   //ReadTempHumidity();
   //ReadLux();
   //ReadCO2();
 
+}
+
+void updateESP() {
+  if (softSerial.available()) {
+    const size_t capacity = JSON_OBJECT_SIZE(26);
+    DynamicJsonDocument doc(capacity);
+    doc["luxPV"] = luxPV;
+    doc["phPV"] = ph_data;
+    doc["doPV"] = do_data;
+    doc["tempPV"] = rtd_data;
+    doc["TurbPV"] = TurbPV;
+    doc["co2InPV"] = co2InPV;
+    doc["co2OutPV"] = co2OutPV;
+    doc["presPV"] = presPV;
+    serializeJson(doc, softSerial);
+  }
 }
 
 /////////////////////////////////////////////////////////
@@ -95,24 +69,10 @@ void loop(){
 float RequestMeterData(const int ezoAdd, float ezoReading) {
   //currentMillis = millis();
   //if(currentMillis - previousMillis > interval) {
-    previousMillis = currentMillis;
-    sendCommand(ezoAdd, 'r', 20);
-    delay(readingDelay);                                  //if it is the sleep command, we do nothing. Issuing a sleep command and then requesting data will wake the RTD circuit.
-    ezoReading = readMeter(ezoAdd, 20, 1);
-  /*
-    sendCommand(RTDmeterAdd, 'r', 20);
-    delay(readingDelay);                                  //if it is the sleep command, we do nothing. Issuing a sleep command and then requesting data will wake the RTD circuit.
-    rtd_data = readMeter(RTDmeterAdd, 20, 1);
-  
-    sendCommand(DOmeterAdd, 'r', 20);
-    delay(readingDelay);                                  //if it is the sleep command, we do nothing. Issuing a sleep command and then requesting data will wake the RTD circuit.
-    do_data = readMeter(DOmeterAdd, 20, 1);
-    if(ph_data!=0){
-    Serial.println(ph_data);              //print the data.
-    }
-
-  //}*/
-  
+  previousMillis = currentMillis;
+  sendCommand(ezoAdd, 'r', 20);
+  delay(readingDelay);                                  //if it is the sleep command, we do nothing. Issuing a sleep command and then requesting data will wake the RTD circuit.
+  ezoReading = readMeter(ezoAdd, 20, 1);
 }
 
 //////////////////////////////////////////////////////////
@@ -123,8 +83,8 @@ float readMeter(const int WireAdd, const int cmd, const int responseSize)  {
   byte i = 0;
   Wire.requestFrom(WireAdd, cmd, responseSize);  //call the circuit and request 20 bytes (this may be more than we need)
   int code = Wire.read();
-  
-  while (Wire.available()) {  
+
+  while (Wire.available()) {
     byte in_char = Wire.read();
     dataStorage[i] = in_char;           //load byte into our array.
     i += 1;                             //next bit.
@@ -143,24 +103,8 @@ void sendCommand (const int WireAdd, const byte cmd, const int responseSize)  {
   Wire.beginTransmission (WireAdd);
   Wire.write (cmd);
   Wire.endTransmission ();
-  
-  if (WireAdd!=PHmeterAdd){
+
+  if (WireAdd != PHmeterAdd) {
     Wire.requestFrom (WireAdd, responseSize);
   }
 }
-  
-//////////////////////////////////////////////////////////
-//              Merge JSON messages                     //
-/////////////////////////////////////////////////////////
-void merge(JsonVariant dst, JsonVariantConst src) {
-  //merge(doc.as<JsonVariant>(), doc1.as<JsonVariant>()); //command to use if needed to call
-  if (src.is<JsonObject>()) {
-    for (auto kvp : src.as<JsonObject>()) {
-      merge(dst.getOrAddMember(kvp.key()), kvp.value());
-    }
-  }
-  else {
-    dst.set(src);
-  }
-}
-

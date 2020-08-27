@@ -214,7 +214,7 @@ void setup_wifi() {
   //WiFiManager
   WiFiManager wifiManager;
   Serial.println("started");
-  //wifiManager.resetSettings(); // turn off after intital settingfs are done
+  //wifiManager.resetSettings(); // turn off after intital settings are done
   wifiManager.setCustomHeadElement("<style>html{filter: invert(40%); -webkit-filter: invert(40%);}</style>");
   WiFiManagerParameter custom_text("<p>This is just a text paragraph</p>");
   wifiManager.addParameter(&custom_text);
@@ -249,25 +249,11 @@ void packetUpDate() {
   const size_t capacity = JSON_OBJECT_SIZE(26);
   DynamicJsonDocument doc1(capacity);
   DynamicJsonDocument doc2(capacity);
-  doc1["luxPV"] = luxPV;
-  doc1["phPV"] = phPV;
-  doc1["doPV"] = doPV;
-  doc1["tempPV"] = tempPV;
-  doc1["TurbPV"] = TurbPV;
-  doc1["co2InPV"] = co2InPV;
-  doc1["co2OutPV"] = co2OutPV;
-  doc1["presPV"] = presPV;
+  doc1["holdingPV"] = luxPV;
   char buffer[256];
   size_t n = serializeJson(doc1, buffer);
   client.publish("brainOutPV1", buffer, n);
-  doc2["luxSV"] = luxSV;
-  doc2["phSV"] = phSV;
-  doc2["doSV"] = doSV;
-  doc2["tempSV"] = tempSV;
-  doc2["TurbSV"] = TurbSV;
-  doc2["co2InSV"] = co2InSV;
-  doc2["co2OutSV"] = co2OutSV;
-  doc2["presSV"] = presSV;
+  doc2["holdingSV"] = luxSV;
   n = serializeJson(doc2, buffer);
   client.publish("brainOutSV1", buffer, n);
 }
