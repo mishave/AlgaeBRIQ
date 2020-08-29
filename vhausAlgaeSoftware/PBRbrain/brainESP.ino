@@ -3,9 +3,9 @@
 #include <PubSubClient.h>
 #include <WiFiManager.h>
 
-unsigned long updateCurrentMillis;
-unsigned long lastUpdateDelay;
-unsigned long updateDelay = 1000;
+unsigned long updateCurrentMillis = 0;
+unsigned long lastUpdateDelay = 0;
+unsigned long updateDelay = 5000;
 
 // MQTT Network
 const char* mqtt_server = "192.168.0.200";
@@ -17,17 +17,21 @@ const char *HA_PASS = "vhaus";
 //Node ID
 const char *ID = "brainESP32";  // Name of our device, must be unique
 
-int pbrAM, pbrSS, lightAM,
-    lp1, lp1_1, lp1_2, lp1_3, lp1_4,
-    lp2, lp2_1, lp2_2, lp2_3, lp2_4,
-    chillAM, chillSS, airAM, airSS,
-    doseAM, phUp, phDown, nutMix, samplePump, topUp,
+int pbrAM = 0, pbrSS = 0, lightAM = 0,
+    lp1 = 0, lp1_1 = 0, lp1_2 = 0, lp1_3 = 0, lp1_4 = 0,
+    lp2 = 0, lp2_1 = 0, lp2_2 = 0, lp2_3 = 0, lp2_4 = 0,
+    chillAM = 0, chillSS = 0, airAM = 0, airSS = 0,
+    doseAM = 0, phUp = 0, phDown = 0, nutMix = 0, samplePump = 0, topUp = 0,
     harvestAM, harbestSS;
 
 int updateCycle, cycleCheck, pbrCycleWeeks, pbrCycleDays, pbrCycleHours, pbrCycleMinuets;
 
 float luxPV, phPV, doPV, tempPV, TurbPV, co2InPV, co2OutPV, presPV;
 float luxSV, phSV, doSV, tempSV, TurbSV, co2InSV, co2OutSV, presSV;
+float luxSVLast, phSVLast, doSVLast, tempSVLast, TurbSVLast, co2InSVLast, co2OutSVLast, presSVLast;
+
+int press_valve_sv, dump1_valve_sv, dump2_valve_sv;
+int press_valve_svLast, dump1_valve_svLast, dump2_valve_svLast;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -145,12 +149,24 @@ void callback(char* topic, byte* payload, unsigned int length) {
     if (payloadStr == "ON") client.publish("pbr/harbestSS/status", "ON"), harbestSS = 1;
     else if (payloadStr == "OFF") client.publish("pbr/harbestSS/status", "OFF"), harbestSS = 0;
   }
-
+  //Cycle Length Settings
   if (topicStr == "pbrCycleWeeks") pbrCycleWeeks = payloadStr.toInt();
   if (topicStr == "pbrCycleDays") pbrCycleDays = payloadStr.toInt();
   if (topicStr == "pbrCycleHours") pbrCycleHours = payloadStr.toInt();
   if (topicStr == "pbrCycleMinuets") pbrCycleMinuets = payloadStr.toInt();
 
+  if (topicStr == "luxSV") luxSV = payloadStr.toFloat();
+  if (topicStr == "phSV") phSV = payloadStr.toFloat();
+  if (topicStr == "doSV") doSV = payloadStr.toFloat();
+  if (topicStr == "tempSV") tempSV = payloadStr.toFloat();
+  if (topicStr == "TurbSV") TurbSV = payloadStr.toFloat();
+  if (topicStr == "co2InSV") co2InSV = payloadStr.toFloat();
+  if (topicStr == "co2OutSV") co2OutSV = payloadStr.toFloat();
+  if (topicStr == "presSV") presSV = payloadStr.toFloat();
+
+  if (topicStr == "press_valve_sv") press_valve_sv = payloadStr.toInt();
+  if (topicStr == "dump1_valve_sv") dump1_valve_sv = payloadStr.toInt();
+  if (topicStr == "dump2_valve_sv") dump2_valve_sv = payloadStr.toInt();
 }
 
 // Reconnect to client
@@ -164,6 +180,7 @@ void reconnect() {
       //publish test connection
       client.publish("outTopic", "hello world");
       //subscribe to topics
+
       //Switches
       client.subscribe("pbr/pbrAM/switch");
       client.subscribe("pbr/pbrSS/switch");
@@ -196,11 +213,26 @@ void reconnect() {
       client.subscribe("pbr/harvestAM/switch");
       client.subscribe("pbr/harbestSS/switch");
 
-
+      //Cycle Length Time
       client.subscribe("pbrCycleWeeks");
       client.subscribe("pbrCycleDays");
       client.subscribe("pbrCycleHours");
       client.subscribe("pbrCycleMinuets");
+
+      //Cycle Length Time
+      client.subscribe("luxSV");
+      client.subscribe("phSV");
+      client.subscribe("doSV");
+      client.subscribe("tempSV");
+      client.subscribe("TurbSV");
+      client.subscribe("co2InSV");
+      client.subscribe("co2OutSV");
+      client.subscribe("presSV");
+
+      //Update ServoSV's
+      client.subscribe("press_valve_sv");
+      client.subscribe("dump1_valve_sv");
+      client.subscribe("dump2_valve_sv");
 
     }
     else {
@@ -258,9 +290,15 @@ void loop() {
   updateCurrentMillis = millis(); //send update every x seconds
   if (updateCurrentMillis - lastUpdateDelay >= updateDelay) {
     lastUpdateDelay = updateCurrentMillis;
-    packetUpDate();  //dump data
+    //packetUpDate();  //dump data
   }
+  updateTimers();
+  updateInputNumbers();
+  updateServos();
 
+}
+
+void updateTimers() {
   updateCycle = pbrCycleWeeks + pbrCycleDays + pbrCycleHours + pbrCycleMinuets;
   if (updateCycle != cycleCheck) {
     //convert to minuets for display
@@ -274,8 +312,52 @@ void loop() {
     str.toCharArray(char_array, str_len);
     client.publish("pbrCycleTime", char_array, str_len);
     cycleCheck = pbrCycleWeeks + pbrCycleDays + pbrCycleHours + pbrCycleMinuets;
-    Serial.println(updateCycle);
   }
+}
+
+void updateInputNumbers() {
+  luxSVLast = sendValFloat("luxSV", luxSV, luxSVLast);
+  phSVLast = sendValFloat("phSV", phSV, phSVLast);
+  doSVLast = sendValFloat("doSV", doSV, doSVLast);
+  tempSVLast = sendValFloat("tempSV", tempSV, tempSVLast);
+  TurbSVLast = sendValFloat("TurbSV", TurbSV, TurbSVLast);
+  co2InSVLast = sendValFloat("co2InSV", co2InSV, co2InSVLast);
+  co2OutSVLast = sendValFloat("co2OutSV", co2OutSV, co2OutSVLast);
+  presSVLast = sendValFloat("presSV", presSV, presSVLast);
+}
+
+void updateServos() {
+  if (press_valve_sv != press_valve_svLast) {
+    sendValInt("press_valve_sv", press_valve_sv);
+    press_valve_svLast = press_valve_sv;
+  }
+  if (dump1_valve_sv != dump1_valve_svLast) {
+    sendValInt("dump1_valve_sv", dump1_valve_sv);
+    dump1_valve_svLast = dump1_valve_sv;
+  }
+  if (dump2_valve_sv != dump2_valve_svLast) {
+    sendValInt("dump2_valve_sv", dump2_valve_sv);
+    dump2_valve_svLast = dump2_valve_sv;
+  }
+}
+
+float sendValFloat(const char *topic, float incomingVal, float lastVal) {
+  if (lastVal != incomingVal) {
+    String str = String(incomingVal);
+    int str_len = str.length() + 1;
+    char char_array[str_len];
+    str.toCharArray(char_array, str_len);
+    client.publish(topic, char_array, str_len);
+    return incomingVal;
+  }
+}
+
+void sendValInt(const char *topic, int incomingValInt) {
+  String str = String(incomingValInt);
+  int str_len = str.length() + 1;
+  char char_array[str_len];
+  str.toCharArray(char_array, str_len);
+  client.publish(topic, char_array, str_len);
 }
 
 void packetUpDate() {
