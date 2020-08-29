@@ -23,7 +23,9 @@ int pbrAM, pbrSS, lightAM,
     chillAM, chillSS, airAM, airSS,
     doseAM, phUp, phDown, nutMix, samplePump, topUp,
     harvestAM, harbestSS;
-    
+
+int updateCycle, cycleCheck, pbrCycleWeeks, pbrCycleDays, pbrCycleHours, pbrCycleMinuets;
+
 float luxPV, phPV, doPV, tempPV, TurbPV, co2InPV, co2OutPV, presPV;
 float luxSV, phSV, doSV, tempSV, TurbSV, co2InSV, co2OutSV, presSV;
 
@@ -143,6 +145,12 @@ void callback(char* topic, byte* payload, unsigned int length) {
     if (payloadStr == "ON") client.publish("pbr/harbestSS/status", "ON"), harbestSS = 1;
     else if (payloadStr == "OFF") client.publish("pbr/harbestSS/status", "OFF"), harbestSS = 0;
   }
+
+  if (topicStr == "pbrCycleWeeks") pbrCycleWeeks = payloadStr.toInt();
+  if (topicStr == "pbrCycleDays") pbrCycleDays = payloadStr.toInt();
+  if (topicStr == "pbrCycleHours") pbrCycleHours = payloadStr.toInt();
+  if (topicStr == "pbrCycleMinuets") pbrCycleMinuets = payloadStr.toInt();
+
 }
 
 // Reconnect to client
@@ -188,6 +196,12 @@ void reconnect() {
       client.subscribe("pbr/harvestAM/switch");
       client.subscribe("pbr/harbestSS/switch");
 
+
+      client.subscribe("pbrCycleWeeks");
+      client.subscribe("pbrCycleDays");
+      client.subscribe("pbrCycleHours");
+      client.subscribe("pbrCycleMinuets");
+
     }
     else {
       Serial.print("failed, rc=");
@@ -206,6 +220,9 @@ void setup() {
   client.setCallback(callback);
 
   setup_wifi(); // Connect to network
+
+  updateCycle = pbrCycleWeeks + pbrCycleDays + pbrCycleHours + pbrCycleMinuets;
+
   delay(1500);
 }
 
@@ -242,6 +259,19 @@ void loop() {
   if (updateCurrentMillis - lastUpdateDelay >= updateDelay) {
     lastUpdateDelay = updateCurrentMillis;
     packetUpDate();  //dump data
+  }
+  
+  updateCycle = pbrCycleWeeks + pbrCycleDays+pbrCycleHours+pbrCycleMinuets;
+  if (updateCycle != cycleCheck) {
+    //convert to minuets for display
+    updateCycle = pbrCycleWeeks * 10080;
+    updateCycle = updateCycle + pbrCycleDays * 1440;
+    updateCycle = updateCycle + pbrCycleHours * 60;
+    updateCycle = updateCycle + pbrCycleMinuets;
+    size_t n = updateCycle;
+    client.publish("pbrCycleTime", updateCycle, n);
+    cycleCheck = pbrCycleWeeks + pbrCycleDays+pbrCycleHours+pbrCycleMinuets;
+    Serial.println(updateCycle);
   }
 }
 
