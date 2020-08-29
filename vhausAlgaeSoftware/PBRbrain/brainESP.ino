@@ -260,17 +260,20 @@ void loop() {
     lastUpdateDelay = updateCurrentMillis;
     packetUpDate();  //dump data
   }
-  
-  updateCycle = pbrCycleWeeks + pbrCycleDays+pbrCycleHours+pbrCycleMinuets;
+
+  updateCycle = pbrCycleWeeks + pbrCycleDays + pbrCycleHours + pbrCycleMinuets;
   if (updateCycle != cycleCheck) {
     //convert to minuets for display
     updateCycle = pbrCycleWeeks * 10080;
     updateCycle = updateCycle + pbrCycleDays * 1440;
     updateCycle = updateCycle + pbrCycleHours * 60;
     updateCycle = updateCycle + pbrCycleMinuets;
-    size_t n = updateCycle;
-    client.publish("pbrCycleTime", updateCycle, n);
-    cycleCheck = pbrCycleWeeks + pbrCycleDays+pbrCycleHours+pbrCycleMinuets;
+    String str = String(updateCycle);
+    int str_len = str.length() + 1;
+    char char_array[str_len];
+    str.toCharArray(char_array, str_len);
+    client.publish("pbrCycleTime", char_array, str_len);
+    cycleCheck = pbrCycleWeeks + pbrCycleDays + pbrCycleHours + pbrCycleMinuets;
     Serial.println(updateCycle);
   }
 }
