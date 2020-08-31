@@ -3,9 +3,12 @@
 #include <PubSubClient.h>
 #include <WiFiManager.h>
 
+#define RXD2 16
+#define TXD2 17
+
 unsigned long updateCurrentMillis = 0;
 unsigned long lastUpdateDelay = 0;
-unsigned long updateDelay = 5000;
+unsigned long updateDelay = 1000;
 
 // MQTT Network
 const char* mqtt_server = "192.168.0.200";
@@ -32,6 +35,12 @@ float luxSVLast, phSVLast, doSVLast, tempSVLast, TurbSVLast, co2InSVLast, co2Out
 
 int press_valve_sv, dump1_valve_sv, dump2_valve_sv;
 int press_valve_svLast, dump1_valve_svLast, dump2_valve_svLast;
+
+
+
+unsigned long startMillis, lastStartDelay = 0;
+const long StartDelay = 3000;
+int startCycleFlag = 0;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -247,6 +256,9 @@ void reconnect() {
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
+  Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
+  Serial.println("Serial Txd is on pin: " + String(TX));
+  Serial.println("Serial Rxd is on pin: " + String(RX));
 
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
@@ -254,7 +266,6 @@ void setup() {
   setup_wifi(); // Connect to network
 
   updateCycle = pbrCycleWeeks + pbrCycleDays + pbrCycleHours + pbrCycleMinuets;
-
   delay(1500);
 }
 
@@ -290,27 +301,51 @@ void loop() {
   updateCurrentMillis = millis(); //send update every x seconds
   if (updateCurrentMillis - lastUpdateDelay >= updateDelay) {
     lastUpdateDelay = updateCurrentMillis;
-    //packetUpDate();  //dump data
+    packetUpDate();  //dump data
   }
   updateTimers();
   updateInputNumbers();
   updateServos();
+  upDateBrain();
 
 }
 
+void upDateBrain()  {
+  if (Serial2.available()) {
+    const size_t brainCap = JSON_OBJECT_SIZE(26);
+    DynamicJsonDocument brain(brainCap);
+    brain["lp1_1"] = lp1_1;
+    brain["lp1_2"] = lp1_1;
+    brain["lp1_3"] = lp1_1;
+    brain["lp1_4"] = lp1_1;
+    brain["lp2_1"] = lp2_1;
+    brain["lp2_2"] = lp2_1;
+    brain["lp2_3"] = lp2_1;
+    brain["lp2_4"] = lp2_1;
+    serializeJson(brain, Serial2);
+    Serial2.println();
+  }
+}
 void updateTimers() {
   updateCycle = pbrCycleWeeks + pbrCycleDays + pbrCycleHours + pbrCycleMinuets;
   if (updateCycle != cycleCheck) {
-    //convert to minuets for display
     updateCycle = pbrCycleWeeks * 10080;
     updateCycle = updateCycle + pbrCycleDays * 1440;
     updateCycle = updateCycle + pbrCycleHours * 60;
     updateCycle = updateCycle + pbrCycleMinuets;
     String str = String(updateCycle);
-    int str_len = str.length() + 1;
-    char char_array[str_len];
-    str.toCharArray(char_array, str_len);
-    client.publish("pbrCycleTime", char_array, str_len);
+
+    const size_t capacityTime = JSON_OBJECT_SIZE(26);
+    DynamicJsonDocument cycleTime(capacityTime);
+    cycleTime["cycleTime"] = str;
+    char buffer[256];
+    size_t n = serializeJson(cycleTime, buffer);
+    client.publish("pbrCycleTime", buffer, n);
+
+    //int str_len = str.length() + 1;
+    //char char_array[str_len];
+    //str.toCharArray(char_array, str_len);
+    //client.publish("pbrCycleTime", char_array, str_len);
     cycleCheck = pbrCycleWeeks + pbrCycleDays + pbrCycleHours + pbrCycleMinuets;
   }
 }
@@ -364,11 +399,45 @@ void packetUpDate() {
   const size_t capacity = JSON_OBJECT_SIZE(26);
   DynamicJsonDocument doc1(capacity);
   DynamicJsonDocument doc2(capacity);
+  DynamicJsonDocument doc3(capacity);
+
   doc1["holdingPV"] = luxPV;
   char buffer[256];
   size_t n = serializeJson(doc1, buffer);
   client.publish("brainOutPV1", buffer, n);
+
   doc2["holdingSV"] = luxSV;
   n = serializeJson(doc2, buffer);
   client.publish("brainOutSV1", buffer, n);
+
+  doc3["status"] = "test";
+  doc3["alarm"] = "test";
+  n = serializeJson(doc3, buffer);
+  client.publish("brainStatus", buffer, n);
+}
+
+void autoCycle()  {
+  if (pbrAM == 1 && pbrSS == 1) {
+    startMillis = millis();
+    if (startMillis - lastStartDelay >= StartDelay) {
+      // save the last time you blinked the LED
+      lastStartDelay = startMillis;
+      startCycleFlag = 1;
+    }
+  }
+  else  {
+    startCycleFlag = 0;
+  }
+
+  if (startCycleFlag == 1)  {
+    checkTimeRemaining(); //Check Time Remaining and Update
+    setServosClosed();    //Set Dump Valves Are Closed
+    checkAir();           //Check That Air Is On
+    checkWaterLevel();    //Check Water Level and Top Up
+    checkPh();            //Check pH Level
+    //checkTemp();          //Check Tempreture
+    //checkLighting();      //Check Light Status
+    reportStatus();
+
+  }
 }
