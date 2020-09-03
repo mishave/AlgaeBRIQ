@@ -6,9 +6,28 @@
 #define RXD2 16
 #define TXD2 17
 
+//Auto Cycle
 unsigned long updateCurrentMillis = 0;
 unsigned long lastUpdateDelay = 0;
 unsigned long updateDelay = 1000;
+
+//Update TImer
+byte checkTime = 0, startHarvestFlag = 0;
+unsigned long countDownFrom = 20160, remainingCycle = 0, remainingCycleLast = 0;
+unsigned long cycleCurrentMillis, lastCycleDelay = 0, MinDelay = 60000;
+//Water Level Check
+unsigned long pbrWaterLowMillis;
+unsigned long pbrWaterFullMillis;
+//const int waterLevelPBR = A1;  //input
+//const int waterPumpPBR = 7;  //Output
+const int waterPumpChiller = 6;
+unsigned long lastPumpOn = 0;
+unsigned long pumpOffDelay = 100;
+unsigned long lastPumpOff = 0;
+unsigned long pumpOnDelay = 100;
+
+// Status Update
+String statusUpdate = " ", alarmUpdate = " ";
 
 // MQTT Network
 const char* mqtt_server = "192.168.0.200";
@@ -307,6 +326,7 @@ void loop() {
   updateInputNumbers();
   updateServos();
   upDateBrain();
+  autoCycle();
 
 }
 
@@ -341,12 +361,16 @@ void updateTimers() {
     char buffer[256];
     size_t n = serializeJson(cycleTime, buffer);
     client.publish("pbrCycleTime", buffer, n);
-
-    //int str_len = str.length() + 1;
-    //char char_array[str_len];
-    //str.toCharArray(char_array, str_len);
-    //client.publish("pbrCycleTime", char_array, str_len);
     cycleCheck = pbrCycleWeeks + pbrCycleDays + pbrCycleHours + pbrCycleMinuets;
+  }
+  if (remainingCycle != remainingCycleLast) {
+    const size_t CycleRemaining = JSON_OBJECT_SIZE(26);
+    DynamicJsonDocument cycleRemaining(CycleRemaining);
+    cycleRemaining["cycleLeft"] = remainingCycle;
+    char buffer[256];
+    size_t n = serializeJson(cycleRemaining, buffer);
+    client.publish("pbrCycleLeft", buffer, n);
+    remainingCycleLast == remainingCycle;
   }
 }
 
@@ -410,8 +434,8 @@ void packetUpDate() {
   n = serializeJson(doc2, buffer);
   client.publish("brainOutSV1", buffer, n);
 
-  doc3["status"] = "test";
-  doc3["alarm"] = "test";
+  doc3["status"] = statusUpdate;
+  doc3["alarm"] = alarmUpdate;
   n = serializeJson(doc3, buffer);
   client.publish("brainStatus", buffer, n);
 }
@@ -431,13 +455,82 @@ void autoCycle()  {
 
   if (startCycleFlag == 1)  {
     checkTimeRemaining(); //Check Time Remaining and Update
-    setServosClosed();    //Set Dump Valves Are Closed
+    //setServosClosed();    //Set Dump Valves Are Closed
     checkAir();           //Check That Air Is On
     checkWaterLevel();    //Check Water Level and Top Up
-    checkPh();            //Check pH Level
+    //checkPh();            //Check pH Level
     //checkTemp();          //Check Tempreture
     //checkLighting();      //Check Light Status
     reportStatus();
 
   }
+}
+
+void checkTimeRemaining()   {
+  //check time at start of cycle
+  if (startCycleFlag == 1) {
+    if (checkTime == 0) {
+      countDownFrom = updateCycle;
+      remainingCycle = countDownFrom;
+      checkTime = 1;
+    }
+    cycleCurrentMillis = millis();
+    if (cycleCurrentMillis - lastCycleDelay >= MinDelay && startCycleFlag == 1) {
+      // save the last time you blinked the LED
+      lastCycleDelay = cycleCurrentMillis;
+      remainingCycle = --remainingCycle;
+    }
+
+    if (startCycleFlag == 1 && remainingCycle == 0) {
+      startHarvestFlag = 1;
+    }
+  }
+}
+
+void checkAir() {
+  if (startCycleFlag == 1 && airAM == 1) {
+    airSS = 1;
+  }
+}
+
+void checkWaterLevel()  {
+  if (startCycleFlag == 1 && doseAM == 1) {
+    int reading = 0;//digitalRead(waterLevelPBR);
+    if (reading == 0) {
+      pbrWaterLowMillis = millis();
+      if (pbrWaterLowMillis - lastPumpOn >= pumpOnDelay) {
+        // save the last time you blinked the LED
+        lastPumpOn = pbrWaterLowMillis;
+        //digitalWrite(waterPumpPBR, HIGH);
+        topUp = 1;
+      }
+    }
+    if (reading == 1) {
+      pbrWaterFullMillis = millis();
+      if (pbrWaterFullMillis - lastPumpOff >= pumpOffDelay) {
+        // save the last time you blinked the LED
+        lastPumpOff = pbrWaterFullMillis;
+        //digitalWrite(WLPin, LOW);
+        topUp = 0;
+      }
+    }
+  }
+}
+
+void reportStatus()  {
+
+  if(pbrAM == 1 && pbrSS == 0) {
+    statusUpdate = "System Ready";
+  }
+  if(pbrAM == 1 && pbrSS == 0 && startCycleFlag == 0) {
+    statusUpdate = "Starting";
+  }
+  if (startCycleFlag == 1) {
+  statusUpdate="Cultervating";
+  }
+
+  if(pbrAM == 0 && pbrSS == 0) {
+    statusUpdate = "System Off";
+  }
+  
 }
