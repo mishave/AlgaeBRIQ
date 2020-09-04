@@ -10,11 +10,15 @@
 unsigned long updateCurrentMillis = 0;
 unsigned long lastUpdateDelay = 0;
 unsigned long updateDelay = 1000;
-
 //Update TImer
 byte checkTime = 0, startHarvestFlag = 0;
 unsigned long countDownFrom = 20160, remainingCycle = 0, remainingCycleLast = 0;
 unsigned long cycleCurrentMillis, lastCycleDelay = 0, MinDelay = 60000;
+unsigned long setCycleLength = 0;
+
+int checkAM = 0;
+
+
 //Water Level Check
 unsigned long pbrWaterLowMillis;
 unsigned long pbrWaterFullMillis;
@@ -140,8 +144,14 @@ void callback(char* topic, byte* payload, unsigned int length) {
     else if (payloadStr == "OFF") client.publish("pbr/airAM/status", "OFF"), airAM = 0;
   }
   if (topicStr == "pbr/airSS/switch") {
-    if (payloadStr == "ON") client.publish("pbr/airSS/status", "ON"), airSS = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/airSS/status", "OFF"), airSS = 0;
+    if (startCycleFlag == 1 && airAM == 0)  {
+      if (payloadStr == "ON") client.publish("pbr/airSS/status", "ON"), airSS = 1;
+      else if (payloadStr == "OFF") client.publish("pbr/airSS/status", "OFF"), airSS = 0;
+    }
+    else if (startCycleFlag == 0  && airAM == 0) {
+      if (payloadStr == "ON") client.publish("pbr/airSS/status", "ON"), airSS = 1;
+      else if (payloadStr == "OFF") client.publish("pbr/airSS/status", "OFF"), airSS = 0;
+    }
   }
 
   if (topicStr == "pbr/doseAM/switch") {
@@ -325,7 +335,7 @@ void loop() {
   updateTimers();
   updateInputNumbers();
   updateServos();
-  upDateBrain();
+  //upDateBrain();
   autoCycle();
 
 }
@@ -353,8 +363,8 @@ void updateTimers() {
     updateCycle = updateCycle + pbrCycleDays * 1440;
     updateCycle = updateCycle + pbrCycleHours * 60;
     updateCycle = updateCycle + pbrCycleMinuets;
+    setCycleLength = updateCycle;
     String str = String(updateCycle);
-
     const size_t capacityTime = JSON_OBJECT_SIZE(26);
     DynamicJsonDocument cycleTime(capacityTime);
     cycleTime["cycleTime"] = str;
@@ -362,15 +372,6 @@ void updateTimers() {
     size_t n = serializeJson(cycleTime, buffer);
     client.publish("pbrCycleTime", buffer, n);
     cycleCheck = pbrCycleWeeks + pbrCycleDays + pbrCycleHours + pbrCycleMinuets;
-  }
-  if (remainingCycle != remainingCycleLast) {
-    const size_t CycleRemaining = JSON_OBJECT_SIZE(26);
-    DynamicJsonDocument cycleRemaining(CycleRemaining);
-    cycleRemaining["cycleLeft"] = remainingCycle;
-    char buffer[256];
-    size_t n = serializeJson(cycleRemaining, buffer);
-    client.publish("pbrCycleLeft", buffer, n);
-    remainingCycleLast == remainingCycle;
   }
 }
 
@@ -451,6 +452,8 @@ void autoCycle()  {
   }
   else  {
     startCycleFlag = 0;
+    remainingCycle = 0;
+    int checkAM = 0;
   }
 
   if (startCycleFlag == 1)  {
@@ -464,33 +467,60 @@ void autoCycle()  {
     reportStatus();
 
   }
+  if (startCycleFlag == 0)  {
+    checkTimeRemaining();
+    reportStatus();
+  }
 }
 
 void checkTimeRemaining()   {
   //check time at start of cycle
   if (startCycleFlag == 1) {
-    if (checkTime == 0) {
-      countDownFrom = updateCycle;
-      remainingCycle = countDownFrom;
-      checkTime = 1;
+    if (checkTime == 1) {
+      remainingCycle = setCycleLength;
+      setCycleRemaining(setCycleLength);
+      checkTime = 0;
     }
     cycleCurrentMillis = millis();
-    if (cycleCurrentMillis - lastCycleDelay >= MinDelay && startCycleFlag == 1) {
+    if (cycleCurrentMillis - lastCycleDelay >= MinDelay && startCycleFlag == 1 && remainingCycle != 0) {
       // save the last time you blinked the LED
+      Serial.println(remainingCycle);
       lastCycleDelay = cycleCurrentMillis;
       remainingCycle = --remainingCycle;
+      setCycleRemaining(remainingCycle);
     }
 
     if (startCycleFlag == 1 && remainingCycle == 0) {
       startHarvestFlag = 1;
     }
   }
+
+  if (startCycleFlag == 0) {
+    if (checkTime == 0) {
+      remainingCycle = 0;
+      setCycleRemaining(remainingCycle);
+      checkTime = 1;
+    }
+  }
+}
+
+void setCycleRemaining(unsigned long cycleLength) {
+  const size_t CycleRemaining = JSON_OBJECT_SIZE(26);
+  DynamicJsonDocument cycleRemaining(CycleRemaining);
+  cycleRemaining["cycleLeft"] = cycleLength;
+  char buffer[256];
+  size_t n = serializeJson(cycleRemaining, buffer);
+  client.publish("pbrCycleLeft", buffer, n);
 }
 
 void checkAir() {
-  if (startCycleFlag == 1 && airAM == 1) {
-    airSS = 1;
+  if (startCycleFlag == 1 && checkAM == 0) {
+    client.publish("pbr/airAM/status", "ON");
+    client.publish("pbr/airSS/status", "ON");
+    checkAM = 1;
   }
+
+
 }
 
 void checkWaterLevel()  {
@@ -519,18 +549,15 @@ void checkWaterLevel()  {
 
 void reportStatus()  {
 
-  if(pbrAM == 1 && pbrSS == 0) {
+  if (pbrAM == 1 && pbrSS == 0) {
     statusUpdate = "System Ready";
   }
-  if(pbrAM == 1 && pbrSS == 0 && startCycleFlag == 0) {
-    statusUpdate = "Starting";
-  }
   if (startCycleFlag == 1) {
-  statusUpdate="Cultervating";
+    statusUpdate = "Cultervating";
   }
 
-  if(pbrAM == 0 && pbrSS == 0) {
+  if (pbrAM == 0 && pbrSS == 0) {
     statusUpdate = "System Off";
   }
-  
+
 }
