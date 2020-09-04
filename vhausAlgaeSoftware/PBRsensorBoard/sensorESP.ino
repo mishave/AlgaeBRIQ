@@ -28,6 +28,9 @@ int pbrAM, pbrSS, lightAM,
     harvestAM, harbestSS;
 
 float luxPV, phPV, doPV, tempPV, TurbPV, co2InPV, co2OutPV, presPV;
+
+int wlIn=1;
+float co2Out=100;
 float luxSV, phSV, doSV, tempSV, TurbSV, co2InSV, co2OutSV, presSV;
 
 WiFiClient espClient;
@@ -140,6 +143,7 @@ void packetUpDate() {
   const size_t capacity = JSON_OBJECT_SIZE(26);
   DynamicJsonDocument doc1(capacity);
   DynamicJsonDocument doc2(capacity);
+  DynamicJsonDocument doc3(capacity);
   doc1["luxPV"] = luxPV;
   doc1["phPV"] = phPV;
   doc1["doPV"] = doPV;
@@ -151,14 +155,25 @@ void packetUpDate() {
   char buffer[256];
   size_t n = serializeJson(doc1, buffer);
   client.publish("sensorOutPV1", buffer, n);
-  doc2["luxSV"] = luxSV;
-  doc2["phSV"] = phSV;
-  doc2["doSV"] = doSV;
-  doc2["tempSV"] = tempSV;
-  doc2["TurbSV"] = TurbSV;
-  doc2["co2InSV"] = co2InSV;
-  doc2["co2OutSV"] = co2OutSV;
-  doc2["presSV"] = presSV;
-  n = serializeJson(doc2, buffer);
+  doc2["wlIn"] = wlIn;
+  doc2["co2Out"] = co2Out;
+  //doc2["doPV"] = doPV;
+  //doc2["tempPV"] = tempPV;
+  //doc2["TurbPV"] = TurbPV;
+  //doc2["co2InPV"] = co2InPV;
+  //doc2["co2OutPV"] = co2OutPV;
+  //doc2["presPV"] = presPV;
+  char buffer[256];
+  size_t n = serializeJson(doc2, buffer);
+  client.publish("sensorOutPV2", buffer, n);
+  doc3["luxSV"] = luxSV;
+  doc3["phSV"] = phSV;
+  doc3["doSV"] = doSV;
+  doc3["tempSV"] = tempSV;
+  doc3["TurbSV"] = TurbSV;
+  doc3["co2InSV"] = co2InSV;
+  doc3["co2OutSV"] = co2OutSV;
+  doc3["presSV"] = presSV;
+  n = serializeJson(doc3, buffer);
   client.publish("sensorOutSV1", buffer, n);
 }

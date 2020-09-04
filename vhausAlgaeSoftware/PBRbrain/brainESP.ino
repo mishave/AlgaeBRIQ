@@ -20,15 +20,11 @@ int checkAM = 0;
 
 
 //Water Level Check
-unsigned long pbrWaterLowMillis;
-unsigned long pbrWaterFullMillis;
-//const int waterLevelPBR = A1;  //input
-//const int waterPumpPBR = 7;  //Output
-const int waterPumpChiller = 6;
-unsigned long lastPumpOn = 0;
-unsigned long pumpOffDelay = 100;
-unsigned long lastPumpOff = 0;
-unsigned long pumpOnDelay = 100;
+unsigned long pbrWaterLowMillis, pbrWaterFullMillis;
+unsigned long lastPumpOn = 0, pumpOnDelay = 100;
+unsigned long lastPumpOff = 0, pumpOffDelay = 100;
+int pumpOnCheck = 0;
+
 
 // Status Update
 String statusUpdate = " ", alarmUpdate = " ";
@@ -59,7 +55,9 @@ float luxSVLast, phSVLast, doSVLast, tempSVLast, TurbSVLast, co2InSVLast, co2Out
 int press_valve_sv, dump1_valve_sv, dump2_valve_sv;
 int press_valve_svLast, dump1_valve_svLast, dump2_valve_svLast;
 
-
+StaticJsonDocument<256> sensorOutPV2;
+int wlIn = 0;
+float co2Out = 100;
 
 unsigned long startMillis, lastStartDelay = 0;
 const long StartDelay = 3000;
@@ -174,11 +172,17 @@ void callback(char* topic, byte* payload, unsigned int length) {
     if (payloadStr == "ON") client.publish("pbr/samplePump/status", "ON"), samplePump = 1;
     else if (payloadStr == "OFF") client.publish("pbr/samplePump/status", "OFF"), samplePump = 0;
   }
-  if (topicStr == "pbr/topUp/switch") {
-    if (payloadStr == "ON") client.publish("pbr/topUp/status", "ON"), topUp = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/topUp/status", "OFF"), topUp = 0;
-  }
 
+  if (topicStr == "pbr/topUp/switch") {
+    if (startCycleFlag == 1 && doseAM == 0)  {
+      if (payloadStr == "ON") client.publish("pbr/topUp/status", "ON"), topUp = 1;
+      else if (payloadStr == "OFF") client.publish("pbr/topUp/status", "OFF"), topUp = 0;
+    }
+    else if (startCycleFlag == 0  && airAM == 0) {
+      if (payloadStr == "ON") client.publish("pbr/topUp/status", "ON"), topUp = 1;
+      else if (payloadStr == "OFF") client.publish("pbr/topUp/status", "OFF"), topUp = 0;
+    }
+  }
   if (topicStr == "pbr/harvestAM/switch") {
     if (payloadStr == "ON") client.publish("pbr/harvestAM/status", "ON"), harvestAM = 1;
     else if (payloadStr == "OFF") client.publish("pbr/harvestAM/status", "OFF"), harvestAM = 0;
@@ -205,6 +209,15 @@ void callback(char* topic, byte* payload, unsigned int length) {
   if (topicStr == "press_valve_sv") press_valve_sv = payloadStr.toInt();
   if (topicStr == "dump1_valve_sv") dump1_valve_sv = payloadStr.toInt();
   if (topicStr == "dump2_valve_sv") dump2_valve_sv = payloadStr.toInt();
+
+  //Read Sensor Board Data
+  if (topicStr == "sensorOutPV2") {
+    deserializeJson(sensorOutPV2, payload, length);
+    wlIn = sensorOutPV2["wlIn"];
+    co2Out = sensorOutPV2["co2Out"];
+  }
+
+
 }
 
 // Reconnect to client
@@ -271,6 +284,9 @@ void reconnect() {
       client.subscribe("press_valve_sv");
       client.subscribe("dump1_valve_sv");
       client.subscribe("dump2_valve_sv");
+
+      //ReadSensorBoard Data
+      client.subscribe("sensorOutPV2");
 
     }
     else {
@@ -453,7 +469,8 @@ void autoCycle()  {
   else  {
     startCycleFlag = 0;
     remainingCycle = 0;
-    int checkAM = 0;
+    checkAM = 0;
+    pumpOnCheck = 0;
   }
 
   if (startCycleFlag == 1)  {
@@ -461,9 +478,9 @@ void autoCycle()  {
     //setServosClosed();    //Set Dump Valves Are Closed
     checkAir();           //Check That Air Is On
     checkWaterLevel();    //Check Water Level and Top Up
+    checkLighting();      //Check Light Status
     //checkPh();            //Check pH Level
     //checkTemp();          //Check Tempreture
-    //checkLighting();      //Check Light Status
     reportStatus();
 
   }
@@ -520,31 +537,86 @@ void checkAir() {
     checkAM = 1;
   }
 
-
 }
 
 void checkWaterLevel()  {
-  if (startCycleFlag == 1 && doseAM == 1) {
-    int reading = 0;//digitalRead(waterLevelPBR);
-    if (reading == 0) {
+  if (startCycleFlag == 1 && pumpOnCheck == 0) {
+    client.publish("pbr/doseAM/status", "ON");
+    client.publish("pbr/topUp/status", "OFF");
+    pumpOnCheck = 1;
+  }
+  else if (startCycleFlag == 1 && pumpOnCheck == 1) {
+    if (wlIn == 0) {
       pbrWaterLowMillis = millis();
       if (pbrWaterLowMillis - lastPumpOn >= pumpOnDelay) {
-        // save the last time you blinked the LED
         lastPumpOn = pbrWaterLowMillis;
-        //digitalWrite(waterPumpPBR, HIGH);
-        topUp = 1;
+        //topUp = 1; turn on the pump
+        if (pumpOnCheck == 1) {
+          client.publish("pbr/topUp/status", "ON");
+          pumpOnCheck = 2;
+        }
       }
     }
-    if (reading == 1) {
+    else if (wlIn == 1) {
       pbrWaterFullMillis = millis();
       if (pbrWaterFullMillis - lastPumpOff >= pumpOffDelay) {
-        // save the last time you blinked the LED
         lastPumpOff = pbrWaterFullMillis;
         //digitalWrite(WLPin, LOW);
-        topUp = 0;
+        //topUp = 0; //turn off the pump
+        if (pumpOnCheck == 2) {
+          client.publish("pbr/topUp/status", "OFF");
+          pumpOnCheck = 1;
+        }
       }
     }
   }
+}
+
+void checkLighting()  {
+  if (startCycleFlag == 1 && LightOnCheck == 0) {
+    client.publish("pbr/lightAM/status", "ON")
+
+    client.publish("pbr/lp1/status", "OFF");
+    client.publish("pbr/lp1_1/status", "OFF");
+    client.publish("pbr/lp1_2/status", "OFF");
+    client.publish("pbr/lp1_3/status", "OFF");
+    client.publish("pbr/lp1_4/status", "OFF");
+
+    client.publish("pbr/lp2/status", "OFF");
+    client.publish("pbr/lp2_1/status", "OFF");
+    client.publish("pbr/lp2_2/status", "OFF");
+    client.publish("pbr/lp2_3/status", "OFF");
+    client.publish("pbr/lp2_4/status", "OFF");
+    LightOnCheck = 1;
+  }
+  else if (startCycleFlag == 1 && LightOnCheck == 1) {
+    if (luxPV < 0) {
+      Light OnMillis = millis();
+      if (pbrWaterLowMillis - lastPumpOn >= pumpOnDelay) {
+        lastPumpOn = pbrWaterLowMillis;
+        //topUp = 1; turn on the pump
+        if (pumpOnCheck == 1) {
+          client.publish("pbr/topUp/status", "ON");
+          pumpOnCheck = 2;
+        }
+      }
+    }
+    else if (luxPV > 0) {
+      pbrWaterFullMillis = millis();
+      if (pbrWaterFullMillis - lastPumpOff >= pumpOffDelay) {
+        lastPumpOff = pbrWaterFullMillis;
+        //digitalWrite(WLPin, LOW);
+        //topUp = 0; //turn off the pump
+        if (pumpOnCheck == 2) {
+          client.publish("pbr/topUp/status", "OFF");
+          pumpOnCheck = 1;
+        }
+      }
+    }
+  }
+
+
+
 }
 
 void reportStatus()  {
