@@ -10,6 +10,12 @@
 unsigned long updateCurrentMillis = 0;
 unsigned long lastUpdateDelay = 0;
 unsigned long updateDelay = 1000;
+
+//Check PBR Time
+String LastTime = "1", lastLightOn = "1", LastStartHour = "1", LastStartMin = "1";
+String pbrTimeStr = " ", pbrLightOnHours = "14", pbrLightStartHour = "7", pbrLightStartMinuet = "0";
+int pbrTime = 0, lightStartTime = 420, lightOffTime = 1260;
+
 //Update TImer
 byte checkTime = 0, startHarvestFlag = 0;
 unsigned long countDownFrom = 20160, remainingCycle = 0, remainingCycleLast = 0;
@@ -217,7 +223,10 @@ void callback(char* topic, byte* payload, unsigned int length) {
     wlIn = sensorOutPV2["wlIn"];
     co2Out = sensorOutPV2["co2Out"];
   }
-
+  if (topicStr == "pbrTime") pbrTimeStr = payloadStr;
+  if (topicStr == "pbrLightOnHours") pbrLightOnHours = payloadStr;
+  if (topicStr == "pbrLightStartHour") pbrLightStartHour = payloadStr;
+  if (topicStr == "pbrLightStartMinuet") pbrLightStartMinuet = payloadStr;
 
 }
 
@@ -356,12 +365,68 @@ void loop() {
     lastUpdateDelay = updateCurrentMillis;
     packetUpDate();  //dump data
   }
+  getPBRTime();
   updateTimers();
   updateInputNumbers();
   updateServos();
   //upDateBrain();
   autoCycle();
 
+}
+
+void getPBRTime() {
+  //get time from Home assistant
+  if (LastTime != pbrTimeStr) {
+    String prbHourStr = getValue(pbrTimeStr, ':', 0);
+    String pbrMinStr = getValue(pbrTimeStr, ':', 1);
+    int prbHour = prbHourStr.toInt();
+    int pbrMin = pbrMinStr.toInt();
+    pbrTime = prbHour * 60;
+    pbrTime = pbrTime + pbrMin;
+    LastTime = pbrTimeStr;
+  }
+
+  //get light cycle length from home assistant
+  if (LastStartHour != pbrLightStartHour ||
+      LastStartMin != pbrLightStartMinuet ||
+      lastLightOn != pbrLightOnHours) {
+
+    int prbStartHour = pbrLightStartHour.toInt();
+    int pbrStartMin = pbrLightStartMinuet.toInt();
+
+    lightStartTime = prbStartHour * 60;
+    lightStartTime = lightStartTime + pbrStartMin;
+
+    LastStartHour = pbrLightStartHour;
+    LastStartMin = pbrLightStartMinuet;
+
+    int lightOnTime = pbrLightOnHours.toInt();
+    lightOffTime = lightOnTime * 60;
+    lightOffTime = lightOffTime + lightStartTime;
+    
+    lastLightOn = pbrLightOnHours;
+
+    Serial.println(lightStartTime);
+    Serial.println(lightOffTime);
+    
+  }
+
+}
+
+String getValue(String data, char separator, int index)
+{
+  int found = 0;
+  int strIndex[] = { 0, -1 };
+  int maxIndex = data.length() - 1;
+
+  for (int i = 0; i <= maxIndex && found <= index; i++) {
+    if (data.charAt(i) == separator || i == maxIndex) {
+      found++;
+      strIndex[0] = strIndex[1] + 1;
+      strIndex[1] = (i == maxIndex) ? i + 1 : i;
+    }
+  }
+  return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
 
 void upDateBrain()  {
@@ -599,7 +664,7 @@ void checkLighting()  {
     LightOnCheck = 1;
   }
   else if (startCycleFlag == 1 && LightOnCheck == 1) {
-    if (luxPV < 0) {
+    if (luxPV < 0 && pbrTime >= lightStartTime && pbrTime <= lightOffTime) {
       pbrWaterLowMillis = millis();
       if (pbrWaterLowMillis - lastPumpOn >= pumpOnDelay) {
         lastPumpOn = pbrWaterLowMillis;
@@ -617,7 +682,7 @@ void checkLighting()  {
         }
       }
     }
-    else if (luxPV > 0) {
+    else if (luxPV > 0 || pbrTime < lightStartTime || pbrTime > lightOffTime ) {
       pbrWaterFullMillis = millis();
       if (pbrWaterFullMillis - lastPumpOff >= pumpOffDelay) {
         lastPumpOff = pbrWaterFullMillis;
