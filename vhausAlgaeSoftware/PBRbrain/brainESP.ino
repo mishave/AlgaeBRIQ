@@ -25,7 +25,8 @@ unsigned long lastPumpOn = 0, pumpOnDelay = 100;
 unsigned long lastPumpOff = 0, pumpOffDelay = 100;
 int pumpOnCheck = 0;
 
-
+//Light cycle check
+int LightOnCheck = 0;
 // Status Update
 String statusUpdate = " ", alarmUpdate = " ";
 
@@ -288,6 +289,13 @@ void reconnect() {
       //ReadSensorBoard Data
       client.subscribe("sensorOutPV2");
 
+
+      //ReadSensorBoard Data
+      client.subscribe("pbrLightOnHours");
+      client.subscribe("pbrLightStartHour");
+      client.subscribe("pbrLightStartMinuet");
+      client.subscribe("pbrTime");
+
     }
     else {
       Serial.print("failed, rc=");
@@ -471,6 +479,7 @@ void autoCycle()  {
     remainingCycle = 0;
     checkAM = 0;
     pumpOnCheck = 0;
+    LightOnCheck = 0;
   }
 
   if (startCycleFlag == 1)  {
@@ -574,7 +583,7 @@ void checkWaterLevel()  {
 
 void checkLighting()  {
   if (startCycleFlag == 1 && LightOnCheck == 0) {
-    client.publish("pbr/lightAM/status", "ON")
+    client.publish("pbr/lightAM/status", "ON");
 
     client.publish("pbr/lp1/status", "OFF");
     client.publish("pbr/lp1_1/status", "OFF");
@@ -591,13 +600,20 @@ void checkLighting()  {
   }
   else if (startCycleFlag == 1 && LightOnCheck == 1) {
     if (luxPV < 0) {
-      Light OnMillis = millis();
+      pbrWaterLowMillis = millis();
       if (pbrWaterLowMillis - lastPumpOn >= pumpOnDelay) {
         lastPumpOn = pbrWaterLowMillis;
         //topUp = 1; turn on the pump
-        if (pumpOnCheck == 1) {
-          client.publish("pbr/topUp/status", "ON");
-          pumpOnCheck = 2;
+        if (LightOnCheck == 1) {
+          client.publish("pbr/lp1_1/status", "ON");
+          client.publish("pbr/lp1_2/status", "ON");
+          client.publish("pbr/lp1_3/status", "ON");
+          client.publish("pbr/lp1_4/status", "ON");
+          client.publish("pbr/lp2_1/status", "ON");
+          client.publish("pbr/lp2_2/status", "ON");
+          client.publish("pbr/lp2_3/status", "ON");
+          client.publish("pbr/lp2_4/status", "ON");
+          LightOnCheck = 2;
         }
       }
     }
@@ -607,9 +623,16 @@ void checkLighting()  {
         lastPumpOff = pbrWaterFullMillis;
         //digitalWrite(WLPin, LOW);
         //topUp = 0; //turn off the pump
-        if (pumpOnCheck == 2) {
-          client.publish("pbr/topUp/status", "OFF");
-          pumpOnCheck = 1;
+        if (LightOnCheck == 2) {
+          client.publish("pbr/lp1_1/status", "OFF");
+          client.publish("pbr/lp1_2/status", "OFF");
+          client.publish("pbr/lp1_3/status", "OFF");
+          client.publish("pbr/lp1_4/status", "OFF");
+          client.publish("pbr/lp2_1/status", "OFF");
+          client.publish("pbr/lp2_2/status", "OFF");
+          client.publish("pbr/lp2_3/status", "OFF");
+          client.publish("pbr/lp2_4/status", "OFF");
+          LightOnCheck = 1;
         }
       }
     }
