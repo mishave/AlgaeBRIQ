@@ -703,8 +703,6 @@ void checkLighting()  {
     }
   }
 
-
-
 }
 
 void reportStatus()  {
