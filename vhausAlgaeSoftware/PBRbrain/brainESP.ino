@@ -42,7 +42,10 @@ unsigned long  pHDowncurrentMillis, lastpHDownDelay, pHDownDelay = 5000;
 unsigned long  pHUpcurrentMillis, lastpHUpDelay, pHUpDelay = 5000;
 unsigned long  pHOffcurrentMillis, lastpHOffDelay, pHOffDelay = 1000;
 
-
+//check Temp
+int tempCheck = 0;
+unsigned long chillcurrentMillis, lastChillDelay, ChillDelay = 5000;
+unsigned long heatcurrentMillis, lastHeatDelay, heatDelay = 5000;
 
 // Status Update
 String statusUpdate = " ", alarmUpdate = " ";
@@ -63,6 +66,7 @@ int pbrAM = 0, pbrSS = 0, lightAM = 0,
     chillAM = 0, chillSS = 0, airAM = 0, airSS = 0,
     doseAM = 0, phUp = 0, phDown = 0, nutMix = 0, samplePump = 0, topUp = 0,
     harvestAM, harbestSS;
+int chillOn = 0, heatOn = 0;
 
 int updateCycle, cycleCheck, pbrCycleWeeks, pbrCycleDays, pbrCycleHours, pbrCycleMinuets;
 
@@ -452,6 +456,21 @@ void upDateBrain()  {
     brain["lp2_2"] = lp2_1;
     brain["lp2_3"] = lp2_1;
     brain["lp2_4"] = lp2_1;
+
+    brain["chillSS"] = chillSS;
+    brain["chillOn"] = chillOn;
+    brain["heatOn"] = heatOn;
+    
+    brain["airSS"] = airSS;
+
+    brain["topUp"] = topUp;
+    brain["phDown"] = phDown;
+    brain["nutMix"] = nutMix;
+    brain["samplePump"] = samplePump;
+
+    brain["harvestAM"] = harvestAM;
+    brain["harbestSS"] = harbestSS;
+
     serializeJson(brain, Serial2);
     Serial2.println();
   }
@@ -635,7 +654,7 @@ void checkWaterLevel()  {
       pbrWaterLowMillis = millis();
       if (pbrWaterLowMillis - lastPumpOn >= pumpOnDelay) {
         lastPumpOn = pbrWaterLowMillis;
-        //topUp = 1; turn on the pump
+        topUp = 1;
         if (pumpOnCheck == 1) {
           client.publish("pbr/topUp/status", "ON");
           pumpOnCheck = 2;
@@ -646,8 +665,7 @@ void checkWaterLevel()  {
       pbrWaterFullMillis = millis();
       if (pbrWaterFullMillis - lastPumpOff >= pumpOffDelay) {
         lastPumpOff = pbrWaterFullMillis;
-        //digitalWrite(WLPin, LOW);
-        //topUp = 0; //turn off the pump
+        topUp = 0;
         if (pumpOnCheck == 2) {
           client.publish("pbr/topUp/status", "OFF");
           pumpOnCheck = 1;
@@ -751,27 +769,56 @@ void checkPh()  {
       }
     }
   }
-
-  if (startCycleFlag == 1 && pumpOn == 1) {
-    pHOffcurrentMillis = millis();
-    if (pHOffcurrentMillis - lastpHOffDelay >= pHOffDelay) {
-      lastpHOffDelay = pHOffcurrentMillis;
-      phDown = 0;
-      phUp = 0;
-      client.publish("pbr/phUp/status", "OFF");
-      client.publish("pbr/phDown/status", "OFF");
-      pumpOn = 0;
-      pHCheck = 1;
+}
+void checkTemp()  {
+  if (startCycleFlag == 1 && tempCheck == 0 || tempCheck == 4) {
+    client.publish("pbr/chillAM/status", "ON");
+    client.publish("pbr/chillSS/status", "OFF");
+    tempCheck = 1;
+  }
+  //Chiller On/Off
+  if (startCycleFlag == 1 && tempCheck == 1) {
+    //int reading = ph_pv_in;
+    if (tempSV >= (tempPV + 3)) {
+      chillcurrentMillis = millis();
+      if (chillcurrentMillis - lastChillDelay >= ChillDelay) {
+        lastChillDelay = chillcurrentMillis;
+        client.publish("pbr/chillSS/status", "ON");
+        chillOn = 1;
+        tempCheck = 2;
+      }
     }
   }
-  if (startCycleFlag == 1 && doseAM == 0 && pHCheck != 3) {
-    pHCheck = 3;
+  if (tempSV <= tempPV && chillOn == 1)  {
+    client.publish("pbr/chillSS/status", "OFF");
+    chillOn = 0;
+    tempCheck = 1;
   }
-  else if (startCycleFlag == 1 && doseAM == 1 && pHCheck == 3) {
-    pHCheck = 4;
+  //Heater On/Off
+  if (startCycleFlag == 1 && tempCheck == 1) {
+    //int reading = ph_pv_in;
+    if (tempSV <= (tempPV + 2)) {
+      heatcurrentMillis = millis();
+      if (heatcurrentMillis - lastHeatDelay >= heatDelay) {
+        lastHeatDelay = heatcurrentMillis;
+        client.publish("pbr/chillSS/status", "ON");
+        heatOn = 1;
+        tempCheck = 2;
+      }
+    }
+  }
+  if (tempSV >= tempPV && heatOn == 1)  {
+    client.publish("pbr/chillSS/status", "OFF");
+    heatOn = 0;
+    tempCheck = 1;
+  }
+  if (startCycleFlag == 1 && chillAM == 0 && tempCheck != 3) {
+    tempCheck = 3;
+  }
+  else if (startCycleFlag == 1 && chillAM == 1 && tempCheck == 3) {
+    tempCheck = 4;
   }
 }
-
 void reportStatus()  {
 
   if (pbrAM == 1 && pbrSS == 0) {
