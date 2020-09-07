@@ -36,6 +36,14 @@ int LightOnCheck = 0;
 unsigned long lightOnMillis, lastLightOnDelay = 0, LightOnDelay = 1000;
 unsigned long lightOffMillis, lastLightOffDelay = 0, LightOffDelay = 1000;
 
+//Ph Check
+int pHCheck = 0, pumpOn = 0;
+unsigned long  pHDowncurrentMillis, lastpHDownDelay, pHDownDelay = 5000;
+unsigned long  pHUpcurrentMillis, lastpHUpDelay, pHUpDelay = 5000;
+unsigned long  pHOffcurrentMillis, lastpHOffDelay, pHOffDelay = 1000;
+
+
+
 // Status Update
 String statusUpdate = " ", alarmUpdate = " ";
 
@@ -556,7 +564,7 @@ void autoCycle()  {
     checkAir();           //Check That Air Is On
     checkWaterLevel();    //Check Water Level and Top Up
     checkLighting();      //Check Light Status
-    //checkPh();            //Check pH Level
+    checkPh();            //Check pH Level
     //checkTemp();          //Check Tempreture
     reportStatus();
 
@@ -712,7 +720,57 @@ void checkLighting()  {
   }
 }
 
+void checkPh()  {
+  if (startCycleFlag == 1 && pHCheck == 0 || pHCheck == 4) {
+    client.publish("pbr/doseAM/status", "ON");
+    client.publish("pbr/phUp/status", "OFF");
+    client.publish("pbr/phDown/status", "OFF");
+    pHCheck = 1;
+  }
+  if (startCycleFlag == 1 && pHCheck == 1) {
+    //int reading = ph_pv_in;
+    if (phPV >= (phSV + 1)) {
+      pHDowncurrentMillis = millis();
+      if (pHDowncurrentMillis - lastpHDownDelay >= pHDownDelay) {
+        lastpHDownDelay = pHDowncurrentMillis;
+        client.publish("pbr/phDown/status", "ON");
+        phDown = 1;
+        pumpOn = 1;
+        pHCheck = 2;
+      }
+    }
 
+    if (phPV <= (phSV - 1)) {
+      pHUpcurrentMillis = millis();
+      if (pHUpcurrentMillis - lastpHUpDelay >= pHUpDelay) {
+        lastPumpOff = pHUpcurrentMillis;
+        client.publish("pbr/phUp/status", "ON");
+        phUp = 1;
+        pumpOn = 1;
+        pHCheck = 2;
+      }
+    }
+  }
+
+  if (startCycleFlag == 1 && pumpOn == 1) {
+    pHOffcurrentMillis = millis();
+    if (pHOffcurrentMillis - lastpHOffDelay >= pHOffDelay) {
+      lastpHOffDelay = pHOffcurrentMillis;
+      phDown = 0;
+      phUp = 0;
+      client.publish("pbr/phUp/status", "OFF");
+      client.publish("pbr/phDown/status", "OFF");
+      pumpOn = 0;
+      pHCheck = 1;
+    }
+  }
+  if (startCycleFlag == 1 && doseAM == 0 && pHCheck != 3) {
+    pHCheck = 3;
+  }
+  else if (startCycleFlag == 1 && doseAM == 1 && pHCheck == 3) {
+    pHCheck = 4;
+  }
+}
 
 void reportStatus()  {
 
