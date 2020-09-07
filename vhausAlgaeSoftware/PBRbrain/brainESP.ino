@@ -11,14 +11,19 @@ unsigned long updateCurrentMillis = 0;
 unsigned long lastUpdateDelay = 0;
 unsigned long updateDelay = 1000;
 
+//start and harvest flags
+unsigned long startMillis, lastStartDelay = 0;
+const long StartDelay = 3000;
+int startCycleFlag = 0, startHarvestFlag = 0;
+
 //Check PBR Time
 String LastTime = "1", lastLightOn = "1", LastStartHour = "1", LastStartMin = "1";
 String pbrTimeStr = " ", pbrLightOnHours = "14", pbrLightStartHour = "7", pbrLightStartMinuet = "0";
 int pbrTime = 0, lightStartTime = 420, lightOffTime = 1260;
 
 //Update TImer
-byte checkTime = 0, startHarvestFlag = 0;
-unsigned long countDownFrom = 20160, remainingCycle = 0, remainingCycleLast = 0;
+byte checkTime = 0;
+long countDownFrom = 20160, remainingCycle = 0, remainingCycleLast = 0;
 unsigned long cycleCurrentMillis, lastCycleDelay = 0, MinDelay = 60000;
 unsigned long setCycleLength = 0;
 
@@ -49,6 +54,8 @@ unsigned long heatcurrentMillis, lastHeatDelay, heatDelay = 5000;
 
 // Status Update
 String statusUpdate = " ", alarmUpdate = " ";
+unsigned long flashMillis, previousFlashMillis, flashInterval = 400;
+int flashState = 0;
 
 // MQTT Network
 const char* mqtt_server = "192.168.0.200";
@@ -80,10 +87,6 @@ int press_valve_svLast, dump1_valve_svLast, dump2_valve_svLast;
 StaticJsonDocument<256> sensorOutPV2;
 int wlIn = 0;
 float co2Out = 100;
-
-unsigned long startMillis, lastStartDelay = 0;
-const long StartDelay = 3000;
-int startCycleFlag = 0;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -438,7 +441,7 @@ void intialiseObjects() {
 
   client.publish("pbr/harvestAM/status", "OFF"), harvestAM = 0;
   client.publish("pbr/harbestSS/status", "OFF"), harbestSS = 0;
-
+  
 }
 
 
@@ -541,6 +544,7 @@ void upDateBrain()  {
     Serial2.println();
   }
 }
+
 void updateTimers() {
   updateCycle = pbrCycleWeeks + pbrCycleDays + pbrCycleHours + pbrCycleMinuets;
   if (updateCycle != cycleCheck) {
@@ -663,6 +667,13 @@ void autoCycle()  {
     reportStatus();
 
   }
+  if (startHarvestFlag == 1)  {
+    checkTimeRemaining();
+    //openCultureValves();
+    //openPressureValve();
+    //startHarvestPump();
+  }
+
   if (startCycleFlag == 0)  {
     checkTimeRemaining();
     reportStatus();
@@ -674,32 +685,30 @@ void autoCycle()  {
 //////////////////////////////////////////////////////////
 void checkTimeRemaining()   {
   //check time at start of cycle
-  if (startCycleFlag == 1) {
+  if (startCycleFlag == 1 || startHarvestFlag == 1) {
     if (checkTime == 1) {
       remainingCycle = setCycleLength;
       setCycleRemaining(setCycleLength);
       checkTime = 0;
     }
     cycleCurrentMillis = millis();
-    if (cycleCurrentMillis - lastCycleDelay >= MinDelay && startCycleFlag == 1 && remainingCycle != 0) {
-      // save the last time you blinked the LED
+    if (cycleCurrentMillis - lastCycleDelay >= MinDelay) {
       Serial.println(remainingCycle);
       lastCycleDelay = cycleCurrentMillis;
-      remainingCycle = --remainingCycle;
-      setCycleRemaining(remainingCycle);
-    }
-
-    if (startCycleFlag == 1 && remainingCycle == 0) {
-      startHarvestFlag = 1;
-      startCycleFlag = 2;
-    }
-
-    if (startCycleFlag == 2 && startHarvestFlag == 1) {
-      //openServos();
-      //startPump();
+      if (startHarvestFlag == 0 && remainingCycle >= -1)  {
+        remainingCycle = --remainingCycle;
+        setCycleRemaining(remainingCycle);
+        if (remainingCycle == -1)  {
+          startHarvestFlag = 1;
+          startCycleFlag = 2;
+        }
+      }
+      if (startHarvestFlag == 1)  {
+        remainingCycle = ++remainingCycle;
+        setCycleRemaining(remainingCycle);
+      }
     }
   }
-
   if (startCycleFlag == 0) {
     if (checkTime == 0) {
       remainingCycle = 0;
@@ -851,6 +860,7 @@ void checkPh()  {
     }
   }
 }
+
 void checkTemp()  {
   if (startCycleFlag == 1 && tempCheck == 0 || tempCheck == 4) {
     client.publish("pbr/chillAM/status", "ON"), chillAM = 1;
@@ -918,8 +928,18 @@ void reportStatus()  {
     statusUpdate = "System Off";
   }
 
-  if (startHarvestFlag = 1) {
-    statusUpdate = "Harvesting";
+  if (startHarvestFlag == 1) {
+    flashMillis = millis();
+    if (flashMillis - previousFlashMillis >= flashInterval) {
+      previousFlashMillis = flashMillis;
+      if (flashState == 0) {
+        statusUpdate = "Harvesting";
+        flashState = 1;
+      } else {
+        statusUpdate = " ";
+        flashState = 0;
+      }
+    }
   }
 
 }
