@@ -288,6 +288,8 @@ void reconnect() {
 
       client.subscribe("pbr/harvestAM/switch");
       client.subscribe("pbr/harbestSS/switch");
+      client.subscribe("pbr/coolingSS/switch");
+      client.subscribe("pbr/heatingSS/switch");
 
       //Cycle Length Time
       client.subscribe("pbrCycleWeeks");
@@ -343,6 +345,7 @@ void setup() {
   setup_wifi(); // Connect to network
 
   updateCycle = pbrCycleWeeks + pbrCycleDays + pbrCycleHours + pbrCycleMinuets;
+  intialiseObjects();
   delay(1500);
 }
 
@@ -366,6 +369,42 @@ void setup_wifi() {
   Serial.println("WiFi connected");
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
+}
+
+void intialiseObjects() {
+  client.publish("pbr/pbrAM/status", "OFF"), pbrAM = 0;;
+  client.publish("pbr/pbrSS/status", "OFF"), pbrSS = 0;
+  
+  client.publish("pbr/lightAM/status", "OFF"), lightAM = 0;
+  client.publish("pbr/lp1/status", "OFF"), lp1 = 0;
+  client.publish("pbr/lp1_1/status", "OFF"), lp1_1 = 0;
+  client.publish("pbr/lp1_2/status", "OFF"), lp1_2 = 0;
+  client.publish("pbr/lp1_3/status", "OFF"), lp1_3 = 0;
+  client.publish("pbr/lp1_4/status", "OFF"), lp1_4 = 0;
+  client.publish("pbr/lp2/status", "OFF"), lp2 = 0;
+  client.publish("pbr/lp2_1/status", "OFF"), lp2_1 = 0;
+  client.publish("pbr/lp2_2/status", "OFF"), lp2_2 = 0;
+  client.publish("pbr/lp2_3/status", "OFF"), lp2_3 = 0;
+  client.publish("pbr/lp2_4/status", "OFF"), lp2_4 = 0;
+
+  client.publish("pbr/chillAM/status", "OFF"), chillAM = 0;
+  client.publish("pbr/chillSS/status", "OFF"), chillSS = 0;
+  client.publish("pbr/coolingSS/status", "OFF"), coolingSS = 0;
+  client.publish("pbr/heatingSS/status", "OFF"), heatingSS = 0;
+  
+  client.publish("pbr/airAM/status", "OFF"), airAM = 0;
+  client.publish("pbr/airSS/status", "OFF"), airSS = 0;
+
+  client.publish("pbr/doseAM/status", "OFF"), doseAM = 0;
+  client.publish("pbr/phUp/status", "OFF"), phUp = 0;
+  client.publish("pbr/phDown/status", "OFF"), phDown = 0;
+  client.publish("pbr/nutMix/status", "OFF"), nutMix = 0;
+  client.publish("pbr/samplePump/status", "OFF"), samplePump = 0;
+  client.publish("pbr/topUp/status", "OFF"), topUp = 0;
+  
+  client.publish("pbr/harvestAM/status", "OFF"), harvestAM = 0;
+  client.publish("pbr/harbestSS/status", "OFF"), harbestSS = 0;
+  
 }
 
 
@@ -584,7 +623,7 @@ void autoCycle()  {
     checkWaterLevel();    //Check Water Level and Top Up
     checkLighting();      //Check Light Status
     checkPh();            //Check pH Level
-    //checkTemp();          //Check Tempreture
+    checkTemp();          //Check Tempreture
     reportStatus();
 
   }
