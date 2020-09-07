@@ -54,7 +54,7 @@ unsigned long heatcurrentMillis, lastHeatDelay, heatDelay = 5000;
 
 // Status Update
 String statusUpdate = " ", alarmUpdate = " ";
-unsigned long flashMillis, previousFlashMillis, flashInterval = 400;
+unsigned long flashMillis, previousFlashMillis, flashInterval = 200;
 int flashState = 0;
 
 // MQTT Network
@@ -441,7 +441,7 @@ void intialiseObjects() {
 
   client.publish("pbr/harvestAM/status", "OFF"), harvestAM = 0;
   client.publish("pbr/harbestSS/status", "OFF"), harbestSS = 0;
-  
+
 }
 
 
@@ -920,7 +920,7 @@ void reportStatus()  {
   if (pbrAM == 1 && pbrSS == 0) {
     statusUpdate = "System Ready";
   }
-  if (startCycleFlag == 1) {
+  if (startCycleFlag == 1 && startHarvestFlag != 1) {
     statusUpdate = "Cultervating";
   }
 
