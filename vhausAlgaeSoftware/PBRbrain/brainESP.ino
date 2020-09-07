@@ -380,7 +380,7 @@ void loop() {
   updateTimers();
   updateInputNumbers();
   updateServos();
-  //upDateBrain();
+  upDateBrain();
   autoCycle();
 
 }
