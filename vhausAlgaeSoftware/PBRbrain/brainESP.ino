@@ -100,65 +100,95 @@ void callback(char* topic, byte* payload, unsigned int length) {
     if (payloadStr == "ON") client.publish("pbr/pbrAM/status", "ON"), pbrAM = 1;
     else if (payloadStr == "OFF") client.publish("pbr/pbrAM/status", "OFF"), pbrAM = 0;
   }
-  if (topicStr == "pbr/pbrSS/switch") {
-    if (payloadStr == "ON") client.publish("pbr/pbrSS/status", "ON"), pbrSS = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/pbrSS/status", "OFF"), pbrSS = 0;
+  if (pbrAM == 1) {
+    if (topicStr == "pbr/pbrSS/switch") {
+      if (payloadStr == "ON") client.publish("pbr/pbrSS/status", "ON"), pbrSS = 1;
+      else if (payloadStr == "OFF") client.publish("pbr/pbrSS/status", "OFF"), pbrSS = 0;
+    }
   }
 
   if (topicStr == "pbr/lightAM/switch") {
     if (payloadStr == "ON") client.publish("pbr/lightAM/status", "ON"), lightAM = 1;
     else if (payloadStr == "OFF") client.publish("pbr/lightAM/status", "OFF"), lightAM = 0;
   }
-  if (topicStr == "pbr/lp1/switch") {
-    if (payloadStr == "ON") client.publish("pbr/lp1/status", "ON"), lp1 = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/lp1/status", "OFF"), lp1 = 0;
-  }
-  if (topicStr == "pbr/lp1_1/switch") {
-    if (payloadStr == "ON") client.publish("pbr/lp1_1/status", "ON"), lp1_1 = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/lp1_1/status", "OFF"), lp1_1 = 0;
-  }
-  if (topicStr == "pbr/lp1_2/switch") {
-    if (payloadStr == "ON") client.publish("pbr/lp1_2/status", "ON"), lp1_2 = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/lp1_2/status", "OFF"), lp1_2 = 0;
-  }
-  if (topicStr == "pbr/lp1_3/switch") {
-    if (payloadStr == "ON") client.publish("pbr/lp1_3/status", "ON"), lp1_3 = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/lp1_3/status", "OFF"), lp1_3 = 0;
-  }
-  if (topicStr == "pbr/lp1_4/switch") {
-    if (payloadStr == "ON") client.publish("pbr/lp1_4/status", "ON"), lp1_4 = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/lp1_4/status", "OFF"), lp1_4 = 0;
-  }
-  if (topicStr == "pbr/lp2/switch") {
-    if (payloadStr == "ON") client.publish("pbr/lp2/status", "ON"), lp2 = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/lp2/status", "OFF"), lp2 = 0;
-  }
-  if (topicStr == "pbr/lp2_1/switch") {
-    if (payloadStr == "ON") client.publish("pbr/lp2_1/status", "ON"), lp2_1 = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/lp2_1/status", "OFF"), lp2_1 = 0;
-  }
-  if (topicStr == "pbr/lp2_2/switch") {
-    if (payloadStr == "ON") client.publish("pbr/lp2_2/status", "ON"), lp2_2 = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/lp2_2/status", "OFF"), lp2_2 = 0;
-  }
-  if (topicStr == "pbr/lp2_3/switch") {
-    if (payloadStr == "ON") client.publish("pbr/lp2_3/status", "ON"), lp2_3 = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/lp2_3/status", "OFF"), lp2_3 = 0;
-  }
-  if (topicStr == "pbr/lp2_4/switch") {
-    if (payloadStr == "ON") client.publish("pbr/lp2_4/status", "ON"), lp2_4 = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/lp2_4/status", "OFF"), lp2_4 = 0;
+
+  if (lightAM == 0) {
+    if (topicStr == "pbr/lp1/switch") {
+      if (payloadStr == "ON") {
+        client.publish("pbr/lp1/status", "ON"), lp1 = 1;
+        client.publish("pbr/lp1_1/status", "ON"), lp1_1 = 1;
+        client.publish("pbr/lp1_2/status", "ON"), lp1_2 = 1;
+        client.publish("pbr/lp1_3/status", "ON"), lp1_3 = 1;
+        client.publish("pbr/lp1_4/status", "ON"), lp1_4 = 1;
+      }
+      else if (payloadStr == "OFF") {
+        client.publish("pbr/lp1/status", "OFF"), lp1 = 0;
+        client.publish("pbr/lp1_1/status", "OFF"), lp1_1 = 0;
+        client.publish("pbr/lp1_2/status", "OFF"), lp1_2 = 0;
+        client.publish("pbr/lp1_3/status", "OFF"), lp1_3 = 0;
+        client.publish("pbr/lp1_4/status", "OFF"), lp1_4 = 0;
+      }
+    }
+    if (topicStr == "pbr/lp1_1/switch") {
+      if (payloadStr == "ON") client.publish("pbr/lp1_1/status", "ON"), lp1_1 = 1;
+      else if (payloadStr == "OFF") client.publish("pbr/lp1_1/status", "OFF"), lp1_1 = 0;
+    }
+    if (topicStr == "pbr/lp1_2/switch") {
+      if (payloadStr == "ON") client.publish("pbr/lp1_2/status", "ON"), lp1_2 = 1;
+      else if (payloadStr == "OFF") client.publish("pbr/lp1_2/status", "OFF"), lp1_2 = 0;
+    }
+    if (topicStr == "pbr/lp1_3/switch") {
+      if (payloadStr == "ON") client.publish("pbr/lp1_3/status", "ON"), lp1_3 = 1;
+      else if (payloadStr == "OFF") client.publish("pbr/lp1_3/status", "OFF"), lp1_3 = 0;
+    }
+    if (topicStr == "pbr/lp1_4/switch") {
+      if (payloadStr == "ON") client.publish("pbr/lp1_4/status", "ON"), lp1_4 = 1;
+      else if (payloadStr == "OFF") client.publish("pbr/lp1_4/status", "OFF"), lp1_4 = 0;
+    }
+    if (topicStr == "pbr/lp2/switch") {
+      if (payloadStr == "ON") {
+        client.publish("pbr/lp2/status", "ON"), lp2 = 1;
+        client.publish("pbr/lp2_1/status", "ON"), lp2_1 = 1;
+        client.publish("pbr/lp2_2/status", "ON"), lp2_2 = 1;
+        client.publish("pbr/lp2_3/status", "ON"), lp2_3 = 1;
+        client.publish("pbr/lp2_4/status", "ON"), lp2_4 = 1;
+      }
+      else if (payloadStr == "OFF") {
+        client.publish("pbr/lp2/status", "OFF"), lp2 = 0;
+        client.publish("pbr/lp2_1/status", "OFF"), lp2_1 = 0;
+        client.publish("pbr/lp2_2/status", "OFF"), lp2_2 = 0;
+        client.publish("pbr/lp2_3/status", "OFF"), lp2_3 = 0;
+        client.publish("pbr/lp2_4/status", "OFF"), lp2_4 = 0;
+      }
+    }
+    if (topicStr == "pbr/lp2_1/switch") {
+      if (payloadStr == "ON") client.publish("pbr/lp2_1/status", "ON"), lp2_1 = 1;
+      else if (payloadStr == "OFF") client.publish("pbr/lp2_1/status", "OFF"), lp2_1 = 0;
+    }
+    if (topicStr == "pbr/lp2_2/switch") {
+      if (payloadStr == "ON") client.publish("pbr/lp2_2/status", "ON"), lp2_2 = 1;
+      else if (payloadStr == "OFF") client.publish("pbr/lp2_2/status", "OFF"), lp2_2 = 0;
+    }
+    if (topicStr == "pbr/lp2_3/switch") {
+      if (payloadStr == "ON") client.publish("pbr/lp2_3/status", "ON"), lp2_3 = 1;
+      else if (payloadStr == "OFF") client.publish("pbr/lp2_3/status", "OFF"), lp2_3 = 0;
+    }
+    if (topicStr == "pbr/lp2_4/switch") {
+      if (payloadStr == "ON") client.publish("pbr/lp2_4/status", "ON"), lp2_4 = 1;
+      else if (payloadStr == "OFF") client.publish("pbr/lp2_4/status", "OFF"), lp2_4 = 0;
+    }
   }
 
   if (topicStr == "pbr/chillAM/switch") {
     if (payloadStr == "ON") client.publish("pbr/chillAM/status", "ON"), chillAM = 1;
     else if (payloadStr == "OFF") client.publish("pbr/chillAM/status", "OFF"), chillAM = 0;
   }
-  if (topicStr == "pbr/chillSS/switch") {
-    if (payloadStr == "ON") client.publish("pbr/chillSS/status", "ON"), chillSS = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/chillSS/status", "OFF"), chillSS = 0;
+  if (chillAM == 0) {
+    if (topicStr == "pbr/chillSS/switch") {
+      if (payloadStr == "ON") client.publish("pbr/chillSS/status", "ON"), chillSS = 1;
+      else if (payloadStr == "OFF") client.publish("pbr/chillSS/status", "OFF"), chillSS = 0;
+    }
   }
-
   if (topicStr == "pbr/airAM/switch") {
     if (payloadStr == "ON") client.publish("pbr/airAM/status", "ON"), airAM = 1;
     else if (payloadStr == "OFF") client.publish("pbr/airAM/status", "OFF"), airAM = 0;
@@ -372,9 +402,13 @@ void setup_wifi() {
 }
 
 void intialiseObjects() {
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
   client.publish("pbr/pbrAM/status", "OFF"), pbrAM = 0;;
   client.publish("pbr/pbrSS/status", "OFF"), pbrSS = 0;
-  
+
   client.publish("pbr/lightAM/status", "OFF"), lightAM = 0;
   client.publish("pbr/lp1/status", "OFF"), lp1 = 0;
   client.publish("pbr/lp1_1/status", "OFF"), lp1_1 = 0;
@@ -389,9 +423,9 @@ void intialiseObjects() {
 
   client.publish("pbr/chillAM/status", "OFF"), chillAM = 0;
   client.publish("pbr/chillSS/status", "OFF"), chillSS = 0;
-  client.publish("pbr/coolingSS/status", "OFF"), coolingSS = 0;
-  client.publish("pbr/heatingSS/status", "OFF"), heatingSS = 0;
-  
+  client.publish("pbr/chillOn/status", "OFF"), chillOn = 0;
+  client.publish("pbr/heatOn/status", "OFF"), heatOn = 0;
+
   client.publish("pbr/airAM/status", "OFF"), airAM = 0;
   client.publish("pbr/airSS/status", "OFF"), airSS = 0;
 
@@ -401,10 +435,10 @@ void intialiseObjects() {
   client.publish("pbr/nutMix/status", "OFF"), nutMix = 0;
   client.publish("pbr/samplePump/status", "OFF"), samplePump = 0;
   client.publish("pbr/topUp/status", "OFF"), topUp = 0;
-  
+
   client.publish("pbr/harvestAM/status", "OFF"), harvestAM = 0;
   client.publish("pbr/harbestSS/status", "OFF"), harbestSS = 0;
-  
+
 }
 
 
@@ -431,15 +465,14 @@ void loop() {
 void getPBRTime() {
   //get time from Home assistant
   if (LastTime != pbrTimeStr) {
-    String prbHourStr = getValue(pbrTimeStr, ':', 0);
-    String pbrMinStr = getValue(pbrTimeStr, ':', 1);
+    String prbHourStr = splitHrMin(pbrTimeStr, ':', 0);
+    String pbrMinStr = splitHrMin(pbrTimeStr, ':', 1);
     int prbHour = prbHourStr.toInt();
     int pbrMin = pbrMinStr.toInt();
     pbrTime = prbHour * 60;
     pbrTime = pbrTime + pbrMin;
     LastTime = pbrTimeStr;
   }
-
   //get light cycle length from home assistant
   if (LastStartHour != pbrLightStartHour ||
       LastStartMin != pbrLightStartMinuet ||
@@ -459,15 +492,10 @@ void getPBRTime() {
     lightOffTime = lightOffTime + lightStartTime;
 
     lastLightOn = pbrLightOnHours;
-
-    Serial.println(lightStartTime);
-    Serial.println(lightOffTime);
-
   }
-
 }
 
-String getValue(String data, char separator, int index)
+String splitHrMin(String data, char separator, int index)
 {
   int found = 0;
   int strIndex[] = { 0, -1 };
@@ -499,7 +527,7 @@ void upDateBrain()  {
     brain["chillSS"] = chillSS;
     brain["chillOn"] = chillOn;
     brain["heatOn"] = heatOn;
-    
+
     brain["airSS"] = airSS;
 
     brain["topUp"] = topUp;
@@ -509,7 +537,6 @@ void upDateBrain()  {
 
     brain["harvestAM"] = harvestAM;
     brain["harbestSS"] = harbestSS;
-
     serializeJson(brain, Serial2);
     Serial2.println();
   }
@@ -559,6 +586,9 @@ void updateServos() {
   }
 }
 
+//////////////////////////////////////////////////////////
+//             Handles Float/Int values                 //
+//////////////////////////////////////////////////////////
 float sendValFloat(const char *topic, float incomingVal, float lastVal) {
   if (lastVal != incomingVal) {
     String str = String(incomingVal);
@@ -569,7 +599,6 @@ float sendValFloat(const char *topic, float incomingVal, float lastVal) {
     return incomingVal;
   }
 }
-
 void sendValInt(const char *topic, int incomingValInt) {
   String str = String(incomingValInt);
   int str_len = str.length() + 1;
@@ -578,6 +607,9 @@ void sendValInt(const char *topic, int incomingValInt) {
   client.publish(topic, char_array, str_len);
 }
 
+//////////////////////////////////////////////////////////
+//              Update Brain Bulk Data                  //
+//////////////////////////////////////////////////////////
 void packetUpDate() {
   const size_t capacity = JSON_OBJECT_SIZE(26);
   DynamicJsonDocument doc1(capacity);
@@ -599,6 +631,9 @@ void packetUpDate() {
   client.publish("brainStatus", buffer, n);
 }
 
+//////////////////////////////////////////////////////////
+//                 Auto Cycle Routine                   //
+//////////////////////////////////////////////////////////
 void autoCycle()  {
   if (pbrAM == 1 && pbrSS == 1) {
     startMillis = millis();
@@ -610,6 +645,7 @@ void autoCycle()  {
   }
   else  {
     startCycleFlag = 0;
+    startHarvestFlag = 0;
     remainingCycle = 0;
     checkAM = 0;
     pumpOnCheck = 0;
@@ -633,6 +669,9 @@ void autoCycle()  {
   }
 }
 
+//////////////////////////////////////////////////////////
+//             Check Cycle Time and Update              //
+//////////////////////////////////////////////////////////
 void checkTimeRemaining()   {
   //check time at start of cycle
   if (startCycleFlag == 1) {
@@ -652,6 +691,12 @@ void checkTimeRemaining()   {
 
     if (startCycleFlag == 1 && remainingCycle == 0) {
       startHarvestFlag = 1;
+      startCycleFlag = 2;
+    }
+
+    if (startCycleFlag == 2 && startHarvestFlag == 1) {
+      //openServos();
+      //startPump();
     }
   }
 
@@ -675,8 +720,8 @@ void setCycleRemaining(unsigned long cycleLength) {
 
 void checkAir() {
   if (startCycleFlag == 1 && checkAM == 0) {
-    client.publish("pbr/airAM/status", "ON");
-    client.publish("pbr/airSS/status", "ON");
+    client.publish("pbr/airAM/status", "ON"), airAM = 1;
+    client.publish("pbr/airSS/status", "ON"), airSS = 1;
     checkAM = 1;
   }
 
@@ -684,8 +729,8 @@ void checkAir() {
 
 void checkWaterLevel()  {
   if (startCycleFlag == 1 && pumpOnCheck == 0) {
-    client.publish("pbr/doseAM/status", "ON");
-    client.publish("pbr/topUp/status", "OFF");
+    client.publish("pbr/doseAM/status", "ON"), doseAM = 1;
+    client.publish("pbr/topUp/status", "OFF"), topUp = 0;
     pumpOnCheck = 1;
   }
   else if (startCycleFlag == 1 && pumpOnCheck == 1) {
@@ -716,8 +761,7 @@ void checkWaterLevel()  {
 
 void checkLighting()  {
   if (startCycleFlag == 1 && LightOnCheck == 0 || LightOnCheck == 4) {
-    client.publish("pbr/lightAM/status", "ON");
-    lightAM = 1;
+    client.publish("pbr/lightAM/status", "ON"), lightAM = 1;
     if (LightOnCheck == 0) {
       client.publish("pbr/lp1/status", "OFF");
       client.publish("pbr/lp1_1/status", "OFF");
@@ -779,9 +823,9 @@ void checkLighting()  {
 
 void checkPh()  {
   if (startCycleFlag == 1 && pHCheck == 0 || pHCheck == 4) {
-    client.publish("pbr/doseAM/status", "ON");
-    client.publish("pbr/phUp/status", "OFF");
-    client.publish("pbr/phDown/status", "OFF");
+    client.publish("pbr/doseAM/status", "ON"), doseAM = 1;
+    client.publish("pbr/phUp/status", "OFF"), phUp = 0;
+    client.publish("pbr/phDown/status", "OFF"), phDown = 0;
     pHCheck = 1;
   }
   if (startCycleFlag == 1 && pHCheck == 1) {
@@ -790,8 +834,7 @@ void checkPh()  {
       pHDowncurrentMillis = millis();
       if (pHDowncurrentMillis - lastpHDownDelay >= pHDownDelay) {
         lastpHDownDelay = pHDowncurrentMillis;
-        client.publish("pbr/phDown/status", "ON");
-        phDown = 1;
+        client.publish("pbr/phDown/status", "ON"), phDown = 1;
         pumpOn = 1;
         pHCheck = 2;
       }
@@ -801,8 +844,7 @@ void checkPh()  {
       pHUpcurrentMillis = millis();
       if (pHUpcurrentMillis - lastpHUpDelay >= pHUpDelay) {
         lastPumpOff = pHUpcurrentMillis;
-        client.publish("pbr/phUp/status", "ON");
-        phUp = 1;
+        client.publish("pbr/phUp/status", "ON"), phUp = 1;
         pumpOn = 1;
         pHCheck = 2;
       }
@@ -811,8 +853,10 @@ void checkPh()  {
 }
 void checkTemp()  {
   if (startCycleFlag == 1 && tempCheck == 0 || tempCheck == 4) {
-    client.publish("pbr/chillAM/status", "ON");
-    client.publish("pbr/chillSS/status", "OFF");
+    client.publish("pbr/chillAM/status", "ON"), chillAM = 1;
+    client.publish("pbr/chillSS/status", "OFF"), chillSS = 0;
+    client.publish("pbr/chillOn/status", "OFF"), chillOn = 0;
+    client.publish("pbr/heatOn/status", "OFF"), heatOn = 0;
     tempCheck = 1;
   }
   //Chiller On/Off
@@ -822,15 +866,15 @@ void checkTemp()  {
       chillcurrentMillis = millis();
       if (chillcurrentMillis - lastChillDelay >= ChillDelay) {
         lastChillDelay = chillcurrentMillis;
-        client.publish("pbr/chillSS/status", "ON");
-        chillOn = 1;
+        client.publish("pbr/chillSS/status", "ON"), chillSS = 1;
+        client.publish("pbr/chillOn/status", "ON"), chillOn = 1;
         tempCheck = 2;
       }
     }
   }
   if (tempSV <= tempPV && chillOn == 1)  {
-    client.publish("pbr/chillSS/status", "OFF");
-    chillOn = 0;
+    client.publish("pbr/chillSS/status", "OFF"), chillSS = 0;
+    client.publish("pbr/chillOn/status", "OFF"), chillOn = 0;
     tempCheck = 1;
   }
   //Heater On/Off
@@ -840,15 +884,15 @@ void checkTemp()  {
       heatcurrentMillis = millis();
       if (heatcurrentMillis - lastHeatDelay >= heatDelay) {
         lastHeatDelay = heatcurrentMillis;
-        client.publish("pbr/chillSS/status", "ON");
-        heatOn = 1;
+        client.publish("pbr/chillSS/status", "ON"), chillSS = 1;
+        client.publish("pbr/heatOn/status", "ON"), heatOn = 1;
         tempCheck = 2;
       }
     }
   }
   if (tempSV >= tempPV && heatOn == 1)  {
-    client.publish("pbr/chillSS/status", "OFF");
-    heatOn = 0;
+    client.publish("pbr/chillSS/status", "OFF"), chillSS = 0;
+    client.publish("pbr/heatOn/status", "OFF"), heatOn = 0;
     tempCheck = 1;
   }
   if (startCycleFlag == 1 && chillAM == 0 && tempCheck != 3) {
@@ -858,6 +902,8 @@ void checkTemp()  {
     tempCheck = 4;
   }
 }
+
+
 void reportStatus()  {
 
   if (pbrAM == 1 && pbrSS == 0) {
@@ -869,6 +915,10 @@ void reportStatus()  {
 
   if (pbrAM == 0 && pbrSS == 0) {
     statusUpdate = "System Off";
+  }
+
+  if (startHarvestFlag = 1) {
+    statusUpdate = "Harvesting";
   }
 
 }
