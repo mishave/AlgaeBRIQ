@@ -77,7 +77,8 @@ int pbrAM = 0, pbrSS = 0, lightAM = 0,
     chillAM = 0, chillSS = 0, airAM = 0, airSS = 0,
     doseAM = 0, phUp = 0, phDown = 0, nutMix = 0, samplePump = 0, topUp = 0,
     harvestAM, harbestSS;
-int chillOn = 0, heatOn = 0;
+int chillOn = 0, heatOn = 0, servoAM = 0;
+int pbrPressOpen = 0, pbrPressClose = 180, pbrDump1Open = 0, pbrDump1Close = 180, pbrDump2Open = 0, pbrDump2Close = 180;
 
 int updateCycle, cycleCheck, pbrCycleWeeks, pbrCycleDays, pbrCycleHours, pbrCycleMinuets;
 
@@ -85,6 +86,7 @@ float luxPV, phPV, doPV, tempPV, TurbPV, co2InPV, co2OutPV, presPV;
 float luxSV, phSV, doSV, tempSV, TurbSV, co2InSV, co2OutSV, presSV;
 float luxSVLast, phSVLast, doSVLast, tempSVLast, TurbSVLast, co2InSVLast, co2OutSVLast, presSVLast;
 
+int servoOn = 0;
 int press_valve_sv, dump1_valve_sv, dump2_valve_sv;
 int press_valve_svLast, dump1_valve_svLast, dump2_valve_svLast;
 
@@ -265,6 +267,19 @@ void callback(char* topic, byte* payload, unsigned int length) {
   if (topicStr == "co2OutSV") co2OutSV = payloadStr.toFloat();
   if (topicStr == "presSV") presSV = payloadStr.toFloat();
 
+  if (topicStr == "pbr/servoAM/switch") {
+    if (payloadStr == "ON") client.publish("pbr/servoAM/status", "ON"), servoAM = 1;
+    else if (payloadStr == "OFF") client.publish("pbr/servoAM/status", "OFF"), servoAM = 0;
+  }
+  if (servoAM == 0) {
+    if (topicStr == "pbrPressOpen") pbrPressOpen = payloadStr.toInt();
+    if (topicStr == "pbrPressOpen") pbrPressOpen = payloadStr.toInt();
+    if (topicStr == "pbrPressClose") pbrPressClose = payloadStr.toInt();
+    if (topicStr == "pbrDump1Open") pbrDump1Open = payloadStr.toInt();
+    if (topicStr == "pbrDump1Close") pbrDump1Close = payloadStr.toInt();
+    if (topicStr == "pbrDump2Open") pbrDump2Open = payloadStr.toInt();
+    if (topicStr == "pbrDump2Close") pbrDump2Close = payloadStr.toInt();
+  }
   if (topicStr == "press_valve_sv") press_valve_sv = payloadStr.toInt();
   if (topicStr == "dump1_valve_sv") dump1_valve_sv = payloadStr.toInt();
   if (topicStr == "dump2_valve_sv") dump2_valve_sv = payloadStr.toInt();
@@ -328,7 +343,7 @@ void reconnect() {
       client.subscribe("pbr/coolingSS/switch");
       client.subscribe("pbr/heatingSS/switch");
 
-      
+
       client.subscribe("pbr/servoAM/switch");
       client.subscribe("pbrPressOpen");
       client.subscribe("pbrPressClose");
@@ -529,7 +544,7 @@ String splitHrMin(String data, char separator, int index)
 
 void upDateBrain()  {
   if (Serial2.available()) {
-    const size_t brainCap = JSON_OBJECT_SIZE(26);
+    const size_t brainCap = JSON_OBJECT_SIZE(27);
     DynamicJsonDocument brain(brainCap);
     brain["lp1_1"] = lp1_1;
     brain["lp1_2"] = lp1_1;
@@ -539,8 +554,7 @@ void upDateBrain()  {
     brain["lp2_2"] = lp2_1;
     brain["lp2_3"] = lp2_1;
     brain["lp2_4"] = lp2_1;
-
-    brain["chillSS"] = chillSS;
+    
     brain["chillOn"] = chillOn;
     brain["heatOn"] = heatOn;
 
@@ -553,7 +567,21 @@ void upDateBrain()  {
 
     brain["harvestAM"] = harvestAM;
     brain["harbestSS"] = harbestSS;
+
+    brain["servoOn"] = servoOn;
+    brain["press_valve_sv"] = press_valve_sv;
+    brain["dump1_valve_sv"] = dump1_valve_sv;
+    brain["dump2_valve_sv"] = dump2_valve_sv;
+    
+    brain["pbrPressOpen"] = pbrPressOpen;
+    brain["pbrPressClose"] = pbrPressClose;
+    brain["pbrDump1Open"] = pbrDump1Open;
+    brain["pbrDump1Close"] = pbrDump1Close;
+    brain["pbrDump2Open"] = pbrDump2Open;
+    brain["pbrDump2Close"] = pbrDump2Close;
+
     serializeJson(brain, Serial2);
+    Serial2.println();
     Serial2.println();
   }
 }
