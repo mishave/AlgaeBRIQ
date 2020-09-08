@@ -547,13 +547,13 @@ void upDateBrain()  {
     const size_t brainCap = JSON_OBJECT_SIZE(27);
     DynamicJsonDocument brain(brainCap);
     brain["lp1_1"] = lp1_1;
-    brain["lp1_2"] = lp1_1;
-    brain["lp1_3"] = lp1_1;
-    brain["lp1_4"] = lp1_1;
+    brain["lp1_2"] = lp1_2;
+    brain["lp1_3"] = lp1_3;
+    brain["lp1_4"] = lp1_4;
     brain["lp2_1"] = lp2_1;
-    brain["lp2_2"] = lp2_1;
-    brain["lp2_3"] = lp2_1;
-    brain["lp2_4"] = lp2_1;
+    brain["lp2_2"] = lp2_2;
+    brain["lp2_3"] = lp2_3;
+    brain["lp2_4"] = lp2_4;
     
     brain["chillOn"] = chillOn;
     brain["heatOn"] = heatOn;
@@ -563,22 +563,22 @@ void upDateBrain()  {
     brain["topUp"] = topUp;
     brain["phDown"] = phDown;
     brain["nutMix"] = nutMix;
-    brain["samplePump"] = samplePump;
+    brain["sPump"] = samplePump;
 
-    brain["harvestAM"] = harvestAM;
-    brain["harbestSS"] = harbestSS;
+    brain["hAM"] = harvestAM;
+    brain["hSS"] = harbestSS;
 
     brain["servoOn"] = servoOn;
-    brain["press_valve_sv"] = press_valve_sv;
-    brain["dump1_valve_sv"] = dump1_valve_sv;
-    brain["dump2_valve_sv"] = dump2_valve_sv;
+    brain["psv"] = press_valve_sv;
+    brain["d1sv"] = dump1_valve_sv;
+    brain["d2sv"] = dump2_valve_sv;
     
-    brain["pbrPressOpen"] = pbrPressOpen;
-    brain["pbrPressClose"] = pbrPressClose;
-    brain["pbrDump1Open"] = pbrDump1Open;
-    brain["pbrDump1Close"] = pbrDump1Close;
-    brain["pbrDump2Open"] = pbrDump2Open;
-    brain["pbrDump2Close"] = pbrDump2Close;
+    brain["pOpen"] = pbrPressOpen;
+    brain["pClose"] = pbrPressClose;
+    brain["d1Open"] = pbrDump1Open;
+    brain["d1Close"] = pbrDump1Close;
+    brain["d2Open"] = pbrDump2Open;
+    brain["d2Close"] = pbrDump2Close;
 
     serializeJson(brain, Serial2);
     Serial2.println();
@@ -713,6 +713,7 @@ void autoCycle()  {
     checkPh();            //Check pH Level
     checkTemp();          //Check Tempreture
     reportStatus();
+    upDateBrain();
 
   }
   if (startCycleFlag == 2 && startHarvestFlag == 1)  {
@@ -722,6 +723,7 @@ void autoCycle()  {
     openPressureValve();
     startHarvestPump();
     reportStatus();
+    upDateBrain();
   }
 
   if (startCycleFlag == 0)  {
