@@ -24,11 +24,12 @@ int pbrTime = 0, lightStartTime = 420, lightOffTime = 1260;
 //Update TImer
 byte checkTime = 0;
 long countDownFrom = 20160, remainingCycle = 0, remainingCycleLast = 0;
-unsigned long cycleCurrentMillis, lastCycleDelay = 0, MinDelay = 60000;
+unsigned long cycleCurrentMillis, lastCycleDelay = 0, MinDelay = 5000;
 unsigned long setCycleLength = 0;
 
-int checkAM = 0;
+int checkServo = 0;
 
+int checkAM = 0;
 
 //Water Level Check
 unsigned long pbrWaterLowMillis, pbrWaterFullMillis;
@@ -52,9 +53,12 @@ int tempCheck = 0;
 unsigned long chillcurrentMillis, lastChillDelay, ChillDelay = 5000;
 unsigned long heatcurrentMillis, lastHeatDelay, heatDelay = 5000;
 
+//Havest Cycle
+int checkHarvest = 0, checkShutOff = 0;
+
 // Status Update
 String statusUpdate = " ", alarmUpdate = " ";
-unsigned long flashMillis, previousFlashMillis, flashInterval = 200;
+unsigned long flashMillis, previousFlashMillis = 0, flashInterval = 150;
 int flashState = 0;
 
 // MQTT Network
@@ -323,6 +327,15 @@ void reconnect() {
       client.subscribe("pbr/harbestSS/switch");
       client.subscribe("pbr/coolingSS/switch");
       client.subscribe("pbr/heatingSS/switch");
+
+      
+      client.subscribe("pbr/servoAM/switch");
+      client.subscribe("pbrPressOpen");
+      client.subscribe("pbrPressClose");
+      client.subscribe("pbrDump1Open");
+      client.subscribe("pbrDump1Close");
+      client.subscribe("pbrDump2Open");
+      client.subscribe("pbrDump2Close");
 
       //Cycle Length Time
       client.subscribe("pbrCycleWeeks");
@@ -641,7 +654,7 @@ void packetUpDate() {
 void autoCycle()  {
   if (pbrAM == 1 && pbrSS == 1) {
     startMillis = millis();
-    if (startMillis - lastStartDelay >= StartDelay) {
+    if (startMillis - lastStartDelay >= StartDelay && startCycleFlag == 0) {
       // save the last time you blinked the LED
       lastStartDelay = startMillis;
       startCycleFlag = 1;
@@ -654,11 +667,18 @@ void autoCycle()  {
     checkAM = 0;
     pumpOnCheck = 0;
     LightOnCheck = 0;
+    checkServo = 0;
+    pHCheck = 0;
+    pumpOn = 0;
+    tempCheck = 0;
+    checkHarvest = 0;
+    checkShutOff = 0;
+
   }
 
-  if (startCycleFlag == 1)  {
+  if (startCycleFlag == 1 && startHarvestFlag == 0)  {
     checkTimeRemaining(); //Check Time Remaining and Update
-    //setServosClosed();    //Set Dump Valves Are Closed
+    setServosClosed();    //Set Dump Valves Are Closed
     checkAir();           //Check That Air Is On
     checkWaterLevel();    //Check Water Level and Top Up
     checkLighting();      //Check Light Status
@@ -667,11 +687,13 @@ void autoCycle()  {
     reportStatus();
 
   }
-  if (startHarvestFlag == 1)  {
+  if (startCycleFlag == 2 && startHarvestFlag == 1)  {
     checkTimeRemaining();
-    //openCultureValves();
-    //openPressureValve();
-    //startHarvestPump();
+    shutOffAuto();
+    openCultureValves();
+    openPressureValve();
+    startHarvestPump();
+    reportStatus();
   }
 
   if (startCycleFlag == 0)  {
@@ -693,19 +715,20 @@ void checkTimeRemaining()   {
     }
     cycleCurrentMillis = millis();
     if (cycleCurrentMillis - lastCycleDelay >= MinDelay) {
-      Serial.println(remainingCycle);
       lastCycleDelay = cycleCurrentMillis;
-      if (startHarvestFlag == 0 && remainingCycle >= -1)  {
+      if (startHarvestFlag == 0)  {
         remainingCycle = --remainingCycle;
-        setCycleRemaining(remainingCycle);
         if (remainingCycle == -1)  {
+          setCycleRemaining(0);
           startHarvestFlag = 1;
           startCycleFlag = 2;
         }
+        else setCycleRemaining(remainingCycle);
       }
       if (startHarvestFlag == 1)  {
         remainingCycle = ++remainingCycle;
         setCycleRemaining(remainingCycle);
+
       }
     }
   }
@@ -725,6 +748,21 @@ void setCycleRemaining(unsigned long cycleLength) {
   char buffer[256];
   size_t n = serializeJson(cycleRemaining, buffer);
   client.publish("pbrCycleLeft", buffer, n);
+}
+
+
+void setServosClosed()  {
+  if (startCycleFlag == 1 && checkServo == 0) {
+    dump1_valve_sv = 0;
+    sendValInt("dump1_valve_sv", dump1_valve_sv);
+    dump1_valve_svLast = dump1_valve_sv;
+
+    dump2_valve_sv = 0;
+    sendValInt("dump2_valve_sv", dump2_valve_sv);
+    dump2_valve_svLast = dump2_valve_sv;
+
+    checkServo = 1;
+  }
 }
 
 void checkAir() {
@@ -913,14 +951,72 @@ void checkTemp()  {
   }
 }
 
+void shutOffAuto()  {
+  if (startHarvestFlag == 1 && checkShutOff == 0) {
+    client.publish("pbr/airSS/status", "OFF"), airSS = 0;
 
+    client.publish("pbr/topUp/status", "OFF"), topUp = 0;
+
+    client.publish("pbr/lp1/status", "OFF");
+    client.publish("pbr/lp2/status", "OFF");
+    client.publish("pbr/lp1_1/status", "OFF");
+    client.publish("pbr/lp1_2/status", "OFF");
+    client.publish("pbr/lp1_3/status", "OFF");
+    client.publish("pbr/lp1_4/status", "OFF");
+    client.publish("pbr/lp2_1/status", "OFF");
+    client.publish("pbr/lp2_2/status", "OFF");
+    client.publish("pbr/lp2_3/status", "OFF");
+    client.publish("pbr/lp2_4/status", "OFF");
+    lp1 = 0, lp1_1 = 0, lp1_2 = 0, lp1_3 = 0, lp1_4 = 0,
+    lp2 = 0, lp2_1 = 0, lp2_2 = 0, lp2_3 = 0, lp2_4 = 0;
+
+    client.publish("pbr/phUp/status", "OFF"), phUp = 0;
+    client.publish("pbr/phDown/status", "OFF"), phDown = 0;
+
+    client.publish("pbr/chillOn/status", "OFF"), chillOn = 0;
+    client.publish("pbr/heatOn/status", "OFF"), heatOn = 0;
+    checkShutOff = 1;
+  }
+}
+
+void openCultureValves() {
+  if (startHarvestFlag == 1 && checkServo == 1) {
+    dump1_valve_sv = 100;
+    sendValInt("dump1_valve_sv", dump1_valve_sv);
+    dump1_valve_svLast = dump1_valve_sv;
+
+    dump2_valve_sv = 100;
+    sendValInt("dump2_valve_sv", dump2_valve_sv);
+    dump2_valve_svLast = dump2_valve_sv;
+
+    checkServo = 2;
+  }
+}
+
+void openPressureValve()  {
+  if (startHarvestFlag == 1 && checkServo == 2) {
+    press_valve_sv = 100;
+    sendValInt("press_valve_sv", press_valve_sv);
+    press_valve_svLast = press_valve_sv;
+
+    checkServo = 3;
+  }
+}
+
+void startHarvestPump() {
+
+  if (startHarvestFlag == 1 && checkHarvest == 0) {
+    client.publish("pbr/harbestSS/status", "ON"), harbestSS = 1;
+    checkHarvest = 1;
+  }
+}
 
 void reportStatus()  {
 
   if (pbrAM == 1 && pbrSS == 0) {
     statusUpdate = "System Ready";
   }
-  if (startCycleFlag == 1 && startHarvestFlag != 1) {
+  if (startCycleFlag == 1 && startHarvestFlag == 0) {
     statusUpdate = "Cultervating";
   }
 
@@ -928,7 +1024,7 @@ void reportStatus()  {
     statusUpdate = "System Off";
   }
 
-  if (startHarvestFlag == 1) {
+  if (startCycleFlag == 2 && startHarvestFlag == 1) {
     flashMillis = millis();
     if (flashMillis - previousFlashMillis >= flashInterval) {
       previousFlashMillis = flashMillis;
@@ -941,5 +1037,7 @@ void reportStatus()  {
       }
     }
   }
+
+  alarmUpdate = "All G";
 
 }
