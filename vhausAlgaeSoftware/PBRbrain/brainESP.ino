@@ -24,7 +24,7 @@ int pbrTime = 0, lightStartTime = 420, lightOffTime = 1260;
 //Update TImer
 byte checkTime = 0;
 long countDownFrom = 20160, remainingCycle = 0, remainingCycleLast = 0;
-unsigned long cycleCurrentMillis, lastCycleDelay = 0, MinDelay = 5000;
+unsigned long cycleCurrentMillis, lastCycleDelay = 0, MinDelay = 60000;
 unsigned long setCycleLength = 0;
 
 int checkServo = 0;
@@ -1055,17 +1055,17 @@ void reportStatus()  {
   }
 
   if (startCycleFlag == 2 && startHarvestFlag == 1) {
-    flashMillis = millis();
-    if (flashMillis - previousFlashMillis >= flashInterval) {
-      previousFlashMillis = flashMillis;
-      if (flashState == 0) {
+    //flashMillis = millis();
+    //if (flashMillis - previousFlashMillis >= flashInterval) {
+     // previousFlashMillis = flashMillis;
+      //if (flashState == 0) {
         statusUpdate = "Harvesting";
-        flashState = 1;
-      } else {
-        statusUpdate = " ";
-        flashState = 0;
-      }
-    }
+       // flashState = 1;
+      //} else {
+      //  statusUpdate = " ";
+       // flashState = 0;
+     // }
+    //}
   }
 
   alarmUpdate = "All G";
