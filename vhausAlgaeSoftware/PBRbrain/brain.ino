@@ -1,65 +1,95 @@
 #include <SoftwareSerial.h>
 #include <ArduinoJson.h>
+#include <VarSpeedServo.h>
+
+//Software Serial Setup Requirements
 SoftwareSerial brainESP(52, 53); // RX, TX
 
-
+//Incoming Data doc from brainESP
 const size_t capacity = JSON_OBJECT_SIZE(27) + 300;
 DynamicJsonDocument brain(capacity);
 const char* json[capacity];
 
+//Servo Setup Requirements
+VarSpeedServo harvestServo1;
+VarSpeedServo dumpServo1;
+VarSpeedServo dumpServo2;
+
+//Serial Readings
 int lp1_1, lp1_2, lp1_3, lp1_4,
     lp2_1, lp2_2, lp2_3, lp2_4,
     chillSS, chillOn, heatOn, airSS,
-    topUp, phDown, nutMix, samplePump, harvestAM, harbestSS,
-    servoOn, press_valve_sv, dump1_valve_sv, dump2_valve_sv,
-    pbrPressOpen, pbrPressClose,
-    pbrDump1Open, pbrDump1Close,
-    pbrDump2Open, pbrDump2Close;
+    topUp, phDown, nutMix, sPump, hAM, hSS,
+    servoOn, psv, d1sv, d2sv,
+    pOpen, pClose, d1Open, d1Close, d2Open, d2Close;
 
-int lp1_1L, lp1_2L, lp1_3L, lp1_4L,
-    lp2_1L, lp2_2L, lp2_3L, lp2_4L;
+//Lighting On/Off
+int lp[]  = {0, 0, 0, 0, 0, 0, 0, 0};
+int lpL[] = {0, 0, 0, 0, 0, 0, 0, 0};
+int lighPin[] = {26, 27, 28, 29, 30, 31, 32, 33};
 
-int lp1_1O = 26, lp1_2O = 27, lp1_3O = 28, lp1_4O = 29,
-    lp2_1O = 30, lp2_2O = 31, lp2_3O = 32, lp2_4O = 33;
+//Servo Control
+int servoOnPin = 12, psvPin = 9, d1svPin = 11, d2svPin = 10;
+int d1svL = 0, d2svL = 0, psvL = 0;
+byte servoOnCheck = 0;
+unsigned long d1Millis, lastD1Delay, d1Delay = 300;
+
+unsigned long servoMillis, lastServoDelay, servoDelay = 1000;
+
+
+//pumps
+int wpCultPin = 6, wpTankPin = 7, wpHarvestPin = 2, airPumpPin = 3;
+
+//Cooling
+int heatPin = 4, coolPin = 5;
+
+
+//Add Output Pins here inorder to set low/Set as Ouput in Setup
+int outPutPins[] = {servoOnPin,
+                    wpCultPin, wpTankPin, wpHarvestPin, airPumpPin,
+                    heatPin, coolPin
+                   };
 
 void setup() {
   Serial.begin(115200);
   brainESP.begin(9600);
+  //Set Lights
+  for (byte i = 0; i < (sizeof(lighPin) / sizeof(lighPin[0])); i++) {
+    pinMode(lighPin[i], OUTPUT);
+    digitalWrite(lighPin[i], LOW);
+  }
+  //Set Relays
+  for (byte i = 0; i < (sizeof(outPutPins) / sizeof(outPutPins[0])); i++) {
+    pinMode(outPutPins[i], OUTPUT);
+    digitalWrite(outPutPins[i], LOW);
+  }
+  //Set Servos
+  harvestServo1.attach(psvPin);
+  harvestServo1.write(0, 127, false);
+  dumpServo1.attach(d1svPin);
+  dumpServo1.write(0, 127, false);
+  dumpServo2.attach(d2svPin);
+  dumpServo2.write(0, 127, true);
 
-  pinMode(lp1_1O, OUTPUT);
-  pinMode(lp1_2O, OUTPUT);
-  pinMode(lp1_3O, OUTPUT);
-  pinMode(lp1_4O, OUTPUT);
-  pinMode(lp2_1O, OUTPUT);
-  pinMode(lp2_2O, OUTPUT);
-  pinMode(lp2_3O, OUTPUT);
-  pinMode(lp2_4O, OUTPUT);
-  digitalWrite(lp1_1O, LOW);
-  digitalWrite(lp1_2O, LOW);
-  digitalWrite(lp1_3O, LOW);
-  digitalWrite(lp1_4O, LOW);
-  digitalWrite(lp2_1O, LOW);
-  digitalWrite(lp2_2O, LOW);
-  digitalWrite(lp2_3O, LOW);
-  digitalWrite(lp2_4O, LOW);
 }
 
 void loop() {
   readBrainESP();
   turnONOffLights();
+  servoControl();
 }
 
 void readBrainESP() {
   if (brainESP.available() > 0) {
     deserializeJson(brain, brainESP);
-    lp1_1 = brain["lp1_1"];
-    lp1_2 = brain["lp1_2"];
-    lp1_3 = brain["lp1_3"];
-    lp1_4 = brain["lp1_4"];
-    lp2_1 = brain["lp2_1"];
-    lp2_2 = brain["lp2_2"];
-    lp2_3 = brain["lp2_3"];
-    lp2_4 = brain["lp2_4"];
+    lp[0] = brain["lp1_1"];
+    lp[1] = brain["lp1_2"];
+    lp[2] = brain["lp1_3"];
+    lp[3] = brain["lp1_4"];
+    lp[4] = brain["lp2_1"];
+    lp[5] = brain["lp2_2"];
+    lp[6] = brain["lp2_3"];
+    lp[7] = brain["lp2_4"];
 
     chillOn = brain["chillOn"];
     heatOn = brain["heatOn"];
@@ -67,72 +97,79 @@ void readBrainESP() {
     topUp = brain["topUp"];
     phDown = brain["phDown"];
     nutMix = brain["nutMix"];
-    samplePump = brain["sPump"];
-    harvestAM = brain["hAM"];
-    harbestSS = brain["hSS"];
+    sPump = brain["sPump"];
+    hSS = brain["hAM"];
+    hSS = brain["hSS"];
     servoOn = brain["servoOn"];
-    press_valve_sv = brain["psv"];
-    dump1_valve_sv = brain["d1sv"];
-    dump2_valve_sv = brain["d2sv"];
-    pbrPressOpen = brain["pOpen"];
-    pbrPressClose = brain["pClose"];
-    pbrDump1Open = brain["d1Open"];
-    pbrDump1Close = brain["d1Close"];
-    pbrDump2Open = brain["d2Open"];
-    pbrDump2Close = brain["d2Close"];
+    psv = brain["psv"];
+    d1sv = brain["d1sv"];
+    d2sv = brain["d2sv"];
+    pOpen = brain["pOpen"];
+    pClose = brain["pClose"];
+    d1Open = brain["d1Open"];
+    d1Close = brain["d1Close"];
+    d2Open = brain["d2Open"];
+    d2Close = brain["d2Close"];
+    servoControl();
   }
 
-  Serial.println(lp1_1);
-  Serial.println(lp1_2);
-  Serial.println(lp1_3);
-  Serial.println(lp1_4);
-  Serial.println();
-  
 }
 
 void turnONOffLights()  {
-  if (lp1_1L != lp1_1) {
-    if (lp1_1 == 1) digitalWrite(lp1_1O, HIGH);
-    else digitalWrite(lp1_1O, LOW);
-    lp1_1L = lp1_1;
+  for (byte i = 0; i < (sizeof(lighPin) / sizeof(lighPin[0])); i++) {
+    if (lpL[i] != lp[i]) {
+      if (lp[i] == 1) digitalWrite(lighPin[i], HIGH);
+      else digitalWrite(lighPin[i], LOW);
+      lpL[i] = lp[i];
+    }
   }
-  if (lp1_2L != lp1_2) {
-    if (lp1_2 == 1) digitalWrite(lp1_2O, HIGH);
-    else digitalWrite(lp1_2O, LOW);
-    lp1_2L = lp1_2;
-  }
-  if (lp1_3L != lp1_3) {
-    if (lp1_3 == 1) digitalWrite(lp1_3O, HIGH);
-    else digitalWrite(lp1_3O, LOW);
-    lp1_3L = lp1_3;
-  }
-  if (lp1_4L != lp1_4) {
-    if (lp1_4 == 1) digitalWrite(lp1_4O, HIGH);
-    else digitalWrite(lp1_4O, LOW);
-    lp1_4L = lp1_4;
-  }
-
-  if (lp2_1L != lp2_1) {
-    if (lp2_1 == 1) digitalWrite(lp2_1O, HIGH);
-    else digitalWrite(lp2_1O, LOW);
-    lp2_1L = lp2_1;
-  }
-  if (lp2_2L != lp2_2) {
-    if (lp2_2 == 1) digitalWrite(lp2_2O, HIGH);
-    else digitalWrite(lp2_2O, LOW);
-    lp2_2L = lp2_2;
-  }
-  if (lp2_3L != lp2_3) {
-    if (lp2_3 == 1) digitalWrite(lp2_3O, HIGH);
-    else digitalWrite(lp2_3O, LOW);
-    lp2_3L = lp2_3;
-  }
-  if (lp2_4L != lp2_4) {
-    if (lp2_4 == 1) digitalWrite(lp2_4O, HIGH);
-    else digitalWrite(lp2_4O, LOW);
-    lp2_4L = lp2_4;
-  }
-
 }
 
+void servoControl() {
+  if (d1svL != d1sv) {
+    digitalWrite(servoOnPin, HIGH);
+    int mapSV = d1sv;
+    mapSV = map(mapSV, 0, 100, d1Open, d1Close);
+    dumpServo1.write(mapSV, 255, false);
+    d1svL = d1sv;
+    servoOnCheck = 1;
+    servoMillis = millis();
+    lastServoDelay = servoMillis;
+  }
+  if (d2svL != d2sv) {
+    digitalWrite(servoOnPin, HIGH);
+    int mapSV = d2sv;
+    mapSV = map(mapSV, 0, 100, d2Open, d2Close);
+    dumpServo2.write(mapSV, 255, false);
+    d2svL = d2sv;
+    servoOnCheck = 1;
+    servoMillis = millis();
+    lastServoDelay = servoMillis;
+  }
+  if (psvL != psv) {
+    digitalWrite(servoOnPin, HIGH);
+    int mapSV = psv;
+    mapSV = map(mapSV, 0, 100, pOpen, pClose);
+    dumpServo1.write(mapSV, 255, false);
+    psvL = psv;
+    servoOnCheck = 1;
+    servoMillis = millis();
+    lastServoDelay = servoMillis;
+  }
 
+
+  if (servoOnCheck == 1)  {
+    servoMillis = millis();
+    if (servoMillis - lastServoDelay >= servoDelay) {
+      // save the last time you blinked the LED
+      Serial.println("OFF");
+      lastServoDelay = servoMillis;
+      digitalWrite(servoOnPin, LOW);
+      servoOnCheck = 0;
+    }
+  }
+
+
+
+
+}
