@@ -6,6 +6,7 @@
 #define RXD2 16
 #define TXD2 17
 
+
 //Auto Cycle
 unsigned long updateCurrentMillis = 0;
 unsigned long lastUpdateDelay = 0;
@@ -112,8 +113,10 @@ void callback(char* topic, byte* payload, unsigned int length) {
   if (pbrAM == 1) {
     if (topicStr == "pbr/pbrSS/switch") {
       if (payloadStr == "ON") client.publish("pbr/pbrSS/status", "ON"), pbrSS = 1;
-      else if (payloadStr == "OFF") client.publish("pbr/pbrSS/status", "OFF"), pbrSS = 0;
     }
+  }
+  if (topicStr == "pbr/pbrSS/switch") {
+    if (payloadStr == "OFF") client.publish("pbr/pbrSS/status", "OFF"), pbrSS = 0;
   }
 
   if (topicStr == "pbr/lightAM/switch") {
@@ -408,6 +411,7 @@ void setup() {
   updateCycle = pbrCycleWeeks + pbrCycleDays + pbrCycleHours + pbrCycleMinuets;
   intialiseObjects();
   delay(1500);
+  
 }
 
 void setup_wifi() {
@@ -493,6 +497,7 @@ void loop() {
 
 }
 
+
 void getPBRTime() {
   //get time from Home assistant
   if (LastTime != pbrTimeStr) {
@@ -554,7 +559,7 @@ void upDateBrain()  {
     brain["lp2_2"] = lp2_2;
     brain["lp2_3"] = lp2_3;
     brain["lp2_4"] = lp2_4;
-    
+
     brain["chillOn"] = chillOn;
     brain["heatOn"] = heatOn;
 
@@ -572,7 +577,7 @@ void upDateBrain()  {
     brain["psv"] = press_valve_sv;
     brain["d1sv"] = dump1_valve_sv;
     brain["d2sv"] = dump2_valve_sv;
-    
+
     brain["pOpen"] = pbrPressOpen;
     brain["pClose"] = pbrPressClose;
     brain["d1Open"] = pbrDump1Open;
@@ -1057,14 +1062,14 @@ void reportStatus()  {
   if (startCycleFlag == 2 && startHarvestFlag == 1) {
     //flashMillis = millis();
     //if (flashMillis - previousFlashMillis >= flashInterval) {
-     // previousFlashMillis = flashMillis;
-      //if (flashState == 0) {
-        statusUpdate = "Harvesting";
-       // flashState = 1;
-      //} else {
-      //  statusUpdate = " ";
-       // flashState = 0;
-     // }
+    // previousFlashMillis = flashMillis;
+    //if (flashState == 0) {
+    statusUpdate = "Harvesting";
+    // flashState = 1;
+    //} else {
+    //  statusUpdate = " ";
+    // flashState = 0;
+    // }
     //}
   }
 
