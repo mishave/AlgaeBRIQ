@@ -93,7 +93,7 @@ int press_valve_svLast, dump1_valve_svLast, dump2_valve_svLast;
 
 StaticJsonDocument<256> sensorOutPV2;
 int wlIn = 0;
-float co2Out = 100;
+float co2Out = 100, co2In;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -411,7 +411,7 @@ void setup() {
   updateCycle = pbrCycleWeeks + pbrCycleDays + pbrCycleHours + pbrCycleMinuets;
   intialiseObjects();
   delay(1500);
-  
+
 }
 
 void setup_wifi() {
@@ -587,7 +587,17 @@ void upDateBrain()  {
 
     serializeJson(brain, Serial2);
     Serial2.println();
-    Serial2.println();
+
+    const size_t capacityin = JSON_OBJECT_SIZE(2) + 20;
+    DynamicJsonDocument docin(capacityin);
+
+    const char* json [capacityin];// = "{\"sensor\":23.2,\"time\":1351824120}";
+
+    deserializeJson(docin, Serial2);
+
+    co2In = docin["sensor"]; // 23.2
+    long time2 = docin["time"]; // 1351824120
+
   }
 }
 
@@ -666,7 +676,7 @@ void packetUpDate() {
   DynamicJsonDocument doc2(capacity);
   DynamicJsonDocument doc3(capacity);
 
-  doc1["holdingPV"] = luxPV;
+  doc1["holdingPV"] = co2In;
   char buffer[256];
   size_t n = serializeJson(doc1, buffer);
   client.publish("brainOutPV1", buffer, n);

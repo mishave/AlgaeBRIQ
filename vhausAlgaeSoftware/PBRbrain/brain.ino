@@ -1,9 +1,5 @@
-#include <SoftwareSerial.h>
 #include <ArduinoJson.h>
 #include <VarSpeedServo.h>
-
-//Software Serial Setup Requirements
-SoftwareSerial brainESP(52, 53); // RX, TX
 
 //Incoming Data doc from brainESP
 const size_t capacity = JSON_OBJECT_SIZE(27) + 300;
@@ -14,6 +10,7 @@ const char* json[capacity];
 VarSpeedServo harvestServo1;
 VarSpeedServo dumpServo1;
 VarSpeedServo dumpServo2;
+
 
 //Serial Readings
 int lp1_1, lp1_2, lp1_3, lp1_4,
@@ -50,15 +47,18 @@ int outPutPins[] = {servoOnPin,
                     heatPin, coolPin
                    };
 
+unsigned long CO2currentMillis, lastCO2Delay, CO2Delay = 5000;
+int co2in;
 void setup() {
   Serial.begin(115200);
-  brainESP.begin(9600);
+  Serial3.begin(9600);
+
   //Set Lights
   for (byte i = 0; i < (sizeof(lighPin) / sizeof(lighPin[0])); i++) {
     pinMode(lighPin[i], OUTPUT);
     digitalWrite(lighPin[i], LOW);
   }
-  //Set Relays
+  //Set Outputs - taken from outPutPins[] array
   for (byte i = 0; i < (sizeof(outPutPins) / sizeof(outPutPins[0])); i++) {
     pinMode(outPutPins[i], OUTPUT);
     digitalWrite(outPutPins[i], LOW);
@@ -77,11 +77,14 @@ void loop() {
   readBrainESP();
   turnONOffLights();
   servoControl();
+  heatCool();
+  airWaterPumps();
+  readCO2();
 }
 
 void readBrainESP() {
-  if (brainESP.available() > 0) {
-    deserializeJson(brain, brainESP);
+  if (Serial3.available() > 0) {
+    deserializeJson(brain, Serial3);
     lp[0] = brain["lp1_1"];
     lp[1] = brain["lp1_2"];
     lp[2] = brain["lp1_3"];
@@ -98,7 +101,7 @@ void readBrainESP() {
     phDown = brain["phDown"];
     nutMix = brain["nutMix"];
     sPump = brain["sPump"];
-    hSS = brain["hAM"];
+    hAM = brain["hAM"];
     hSS = brain["hSS"];
     servoOn = brain["servoOn"];
     psv = brain["psv"];
@@ -110,7 +113,15 @@ void readBrainESP() {
     d1Close = brain["d1Close"];
     d2Open = brain["d2Open"];
     d2Close = brain["d2Close"];
-    servoControl();
+
+    const size_t capacity2 = JSON_OBJECT_SIZE(2);
+    DynamicJsonDocument docout(capacity2);
+
+    docout["sensor"] = co2in;
+    docout["time"] = 1351824120;
+
+    serializeJson(docout, Serial3);
+    Serial3.println();
   }
 
 }
@@ -150,7 +161,7 @@ void servoControl() {
     digitalWrite(servoOnPin, HIGH);
     int mapSV = psv;
     mapSV = map(mapSV, 0, 100, pOpen, pClose);
-    dumpServo1.write(mapSV, 255, false);
+    harvestServo1.write(mapSV, 255, false);
     psvL = psv;
     servoOnCheck = 1;
     servoMillis = millis();
@@ -162,14 +173,59 @@ void servoControl() {
     servoMillis = millis();
     if (servoMillis - lastServoDelay >= servoDelay) {
       // save the last time you blinked the LED
-      Serial.println("OFF");
       lastServoDelay = servoMillis;
       digitalWrite(servoOnPin, LOW);
       servoOnCheck = 0;
     }
   }
+}
+
+void heatCool() {
+  if (chillOn == 1) {
+    digitalWrite(coolPin, HIGH);
+  }
+  else if (chillOn == 0) {
+    digitalWrite(coolPin, LOW);
+  }
+  if (heatOn == 1) {
+    digitalWrite(heatPin, HIGH);
+  }
+  else if (heatOn == 0) {
+    digitalWrite(heatPin, LOW);
+  }
+
+}
+
+void airWaterPumps()  {
+  if (airSS == 1) {
+    digitalWrite(airPumpPin, HIGH);
+  }
+  else if (airSS == 0) {
+    digitalWrite(airPumpPin, LOW);
+  }
+  if (topUp == 1) {
+    digitalWrite(wpCultPin, HIGH);
+  }
+  else if (topUp == 0) {
+    digitalWrite(wpCultPin, LOW);
+  }
+  if (hSS == 1) {
+    digitalWrite(wpHarvestPin, HIGH);
+  }
+  else if (hSS == 0) {
+    digitalWrite(wpHarvestPin, LOW);
+  }
+}
 
 
-
-
+void readCO2() {
+  unsigned long th, tl, ppm_pwm = 0;
+  do {
+    th = pulseIn(44, HIGH, 1004000) / 1000;
+    tl = 1004 - th;
+    ppm_pwm = 5000 * (th - 2) / (th + tl - 4);
+  } while (th == 0);
+  Serial.print("PPM PWM: ");
+  Serial.println(ppm_pwm);
+  co2in = ppm_pwm;
 }
