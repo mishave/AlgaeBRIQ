@@ -25,12 +25,12 @@ char Atlasdata[20];
 const int readingDelay = 800;
 
 float phSV, rtdPV, doSV, tempSV, TurbSV, humSV;
-int co2OutSV;
+int co2OutSV, wlPV;
 float luxSV, irSV, fullSV, visSV;
 
 
 //Input setup
-int turbPin A0;
+int turbPin = 34;
 
 unsigned long currentMillis;
 unsigned long previousMillis;
@@ -189,7 +189,7 @@ void packetUpDate() {
   doc2["irSV"] = irSV;
   doc2["fullSV"] = fullSV;
   doc2["visSV"] = visSV;
-  //doc2["TurbPV"] = TurbPV;
+  doc2["wlPV"] = wlPV;
   //doc2["co2InPV"] = co2InPV;
   //doc2["co2OutPV"] = co2OutPV;
   //doc2["presPV"] = presPV;
@@ -297,8 +297,30 @@ int readCO2UART() {
 }
 
 void readInputs() {
+  float turbRaw = ((float)analogRead(turbPin));
+  float turbValue = (turbRaw * 3.3) / 4095.0;
+  float turbMap = (turbValue - 0) * (5.0 - 0) / (3.3 - 0) + 0;
+  if (turbMap < 2.5) {
+    TurbSV = 3000;
+  }
+  else if (turbMap >= 4.2) {
+    TurbSV = 0;
 
-  float turbValue = analogRead(turbPin);
+  }
+  else {
+    TurbSV = -1120.4 * sq(turbMap) + 5742.3 * turbMap - 4353.8;
+  }
+  //char a[100];
+  //sprintf(a, "raw: %f  Val: %f  Map: %f  NTU: %f", turbRaw, turbValue, turbMap, TurbSV);
+  //Serial.println(a);
+
+  int waterLevelRead = digitalRead(35);
+  if (waterLevelRead == HIGH) {
+    wlPV = 0;
+  } else {
+    wlPV = 1;
+  }
 
   
+
 }
