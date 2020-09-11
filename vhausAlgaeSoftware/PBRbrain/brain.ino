@@ -6,6 +6,10 @@ const size_t capacity = JSON_OBJECT_SIZE(27) + 300;
 DynamicJsonDocument brain(capacity);
 const char* json[capacity];
 
+const size_t capacity2 = JSON_OBJECT_SIZE(2);
+DynamicJsonDocument docout(capacity2);
+
+
 //Servo Setup Requirements
 VarSpeedServo harvestServo1;
 VarSpeedServo dumpServo1;
@@ -47,7 +51,7 @@ int outPutPins[] = {servoOnPin,
                     heatPin, coolPin
                    };
 
-unsigned long CO2currentMillis, lastCO2Delay, CO2Delay = 5000;
+unsigned long readMillis,lastreadOff,readDelay =5000;
 int co2in;
 void setup() {
   Serial.begin(115200);
@@ -63,6 +67,10 @@ void setup() {
     pinMode(outPutPins[i], OUTPUT);
     digitalWrite(outPutPins[i], LOW);
   }
+
+  pinMode(A0, INPUT);    // sets the digital pin 7 as input
+
+  
   //Set Servos
   harvestServo1.attach(psvPin);
   harvestServo1.write(0, 127, false);
@@ -79,7 +87,7 @@ void loop() {
   servoControl();
   heatCool();
   airWaterPumps();
-  readCO2();
+  readInputs();
 }
 
 void readBrainESP() {
@@ -114,16 +122,16 @@ void readBrainESP() {
     d2Open = brain["d2Open"];
     d2Close = brain["d2Close"];
 
-    const size_t capacity2 = JSON_OBJECT_SIZE(2);
-    DynamicJsonDocument docout(capacity2);
 
     docout["sensor"] = co2in;
     docout["time"] = 1351824120;
-
     serializeJson(docout, Serial3);
     Serial3.println();
   }
 
+
+  serializeJson(brain, Serial);
+  Serial.println();
 }
 
 void turnONOffLights()  {
@@ -218,14 +226,8 @@ void airWaterPumps()  {
 }
 
 
-void readCO2() {
-  unsigned long th, tl, ppm_pwm = 0;
-  do {
-    th = pulseIn(44, HIGH, 1004000) / 1000;
-    tl = 1004 - th;
-    ppm_pwm = 5000 * (th - 2) / (th + tl - 4);
-  } while (th == 0);
-  Serial.print("PPM PWM: ");
-  Serial.println(ppm_pwm);
-  co2in = ppm_pwm;
+void readInputs() {
+  
+  co2in = digitalRead(A0);
+  
 }

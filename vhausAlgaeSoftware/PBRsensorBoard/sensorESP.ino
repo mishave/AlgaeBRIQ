@@ -1,14 +1,41 @@
+#include <SparkFun_Qwiic_Humidity_AHT20.h>
+#include <Adafruit_Sensor.h>
+#include "Adafruit_TSL2591.h"
+
+#include <SparkFun_Qwiic_Humidity_AHT20.h>
+AHT20 humiditySensor;
+
 #include <ArduinoJson.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <WiFiManager.h>
+#include <Wire.h>
 
 #define RXD2 16
 #define TXD2 17
 
-unsigned long updateCurrentMillis;
-unsigned long lastUpdateDelay;
-unsigned long updateDelay = 1000;
+Adafruit_TSL2591 tsl = Adafruit_TSL2591(2591);
+
+
+const int DOmeterAdd = 97;
+const int RTDmeterAdd = 102;
+const int PHmeterAdd = 99;
+
+char Atlasdata[20];
+const int readingDelay = 800;
+
+float phSV, rtdPV, doSV, tempSV, TurbSV, humSV;
+int co2OutSV;
+float luxSV, irSV, fullSV, visSV;
+
+
+//Input setup
+int turbPin A0;
+
+unsigned long currentMillis;
+unsigned long previousMillis;
+int interval = 5000;
+
 
 // MQTT Network
 const char* mqtt_server = "192.168.0.200";
@@ -20,18 +47,6 @@ const char *HA_PASS = "vhaus";
 //Node ID
 const char *ID = "sensorESP32";  // Name of our device, must be unique
 
-int pbrAM, pbrSS, lightAM,
-    lp1, lp1_1, lp1_2, lp1_3, lp1_4,
-    lp2, lp2_1, lp2_2, lp2_3, lp2_4,
-    chillAM, chillSS, airAM, airSS,
-    doseAM, phUp, phDown, nutMix, samplePump, topUp,
-    harvestAM, harbestSS;
-
-float luxPV, phPV, doPV, tempPV, TurbPV, co2InPV, co2OutPV, presPV;
-
-int wlIn=1;
-float co2Out=100;
-float luxSV, phSV, doSV, tempSV, TurbSV, co2InSV, co2OutSV, presSV;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -43,11 +58,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   payload[length] = '\0';
   String payloadStr = String((char*)payload);
   Serial.println(payloadStr);
-
-  if (topicStr == "pbr/pbrAM/switch") {
-    if (payloadStr == "ON") client.publish("pbr/pbrAM/status", "ON"), pbrAM = 1;
-    else if (payloadStr == "OFF") client.publish("pbr/pbrAM/status", "OFF"), pbrAM = 0;
-  }
 
 }
 
@@ -78,8 +88,15 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
   Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
-  Serial.println("Serial Txd is on pin: " + String(TX));
-  Serial.println("Serial Rxd is on pin: " + String(RX));
+
+  Wire.begin();
+
+  configureSensor();
+
+  if (humiditySensor.begin() == false)
+  {
+    while (1);
+  }
 
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
@@ -110,70 +127,178 @@ void setup_wifi() {
   Serial.println(WiFi.localIP());
 }
 
+void configureSensor(void)
+{
+  // You can change the gain on the fly, to adapt to brighter/dimmer light situations
+  //tsl.setGain(TSL2591_GAIN_LOW);    // 1x gain (bright light)
+  tsl.setGain(TSL2591_GAIN_MED);      // 25x gain
+  //tsl.setGain(TSL2591_GAIN_HIGH);   // 428x gain
+
+  // Changing the integration time gives you a longer time over which to sense light
+  // longer timelines are slower, but are good in very low light situtations!
+  //tsl.setTiming(TSL2591_INTEGRATIONTIME_100MS);  // shortest integration time (bright light)
+  // tsl.setTiming(TSL2591_INTEGRATIONTIME_200MS);
+  tsl.setTiming(TSL2591_INTEGRATIONTIME_300MS);
+  // tsl.setTiming(TSL2591_INTEGRATIONTIME_400MS);
+  // tsl.setTiming(TSL2591_INTEGRATIONTIME_500MS);
+  // tsl.setTiming(TSL2591_INTEGRATIONTIME_600MS);  // longest integration time (dim light)
+  tsl2591Gain_t gain = tsl.getGain();
+
+}
 
 void loop() {
-
-  while (Serial2.available()) {
-    const size_t capacity = JSON_OBJECT_SIZE(8) + 90;
-    DynamicJsonDocument doc(capacity);
-    const char* json[capacity];
-    deserializeJson(doc, Serial2);
-    luxPV = doc["luxPV"]; // 21.3
-    phPV = doc["phPV"]; // 14.02
-    doPV = doc["doPV"]; // 0
-    tempPV = doc["tempPV"]; // 0
-    TurbPV = doc["TurbPV"]; // 0
-    co2InPV = doc["co2InPV"]; // 0
-    co2OutPV = doc["co2OutPV"]; // 0
-    presPV = doc["presPV"]; // 0
+  phSV = RequestMeterData(PHmeterAdd);
+  rtdPV = RequestMeterData(RTDmeterAdd);
+  doSV = RequestMeterData(DOmeterAdd);
+  readLight();
+  if (humiditySensor.available() == true)
+  {
+    tempSV = humiditySensor.getTemperature();
+    humSV = humiditySensor.getHumidity();
   }
+  co2OutSV = readCO2UART();
+
+  readInputs();
+
+
   if (!client.connected()) {
     reconnect();
   }
   client.loop();
-  
-  updateCurrentMillis = millis(); //send update every x seconds
-  if (updateCurrentMillis - lastUpdateDelay >= updateDelay) {
-    lastUpdateDelay = updateCurrentMillis;
-    packetUpDate();  //dump data
-  }
+
+  packetUpDate();
 }
 
 void packetUpDate() {
   const size_t capacity = JSON_OBJECT_SIZE(26);
   DynamicJsonDocument doc1(capacity);
   DynamicJsonDocument doc2(capacity);
-  DynamicJsonDocument doc3(capacity);
-  doc1["luxPV"] = luxPV;
-  doc1["phPV"] = phPV;
-  doc1["doPV"] = doPV;
-  doc1["tempPV"] = tempPV;
-  doc1["TurbPV"] = TurbPV;
-  doc1["co2InPV"] = co2InPV;
-  doc1["co2OutPV"] = co2OutPV;
-  doc1["presPV"] = presPV;
+  //DynamicJsonDocument doc3(capacity);
+  doc1["phSV"] = phSV;
+  doc1["rtdPV"] = rtdPV;
+  doc1["doSV"] = doSV;
+  doc1["tempSV"] = tempSV;
+  doc1["TurbSV"] = TurbSV;
+  doc1["luxSV"] = luxSV;
+  doc1["co2OutSV"] = co2OutSV;
+  doc1["humSV"] = humSV;
   char buffer[256];
   size_t n = serializeJson(doc1, buffer);
-  client.publish("sensorOutPV1", buffer, n);
-  doc2["wlIn"] = wlIn;
-  doc2["co2Out"] = co2Out;
-  //doc2["doPV"] = doPV;
-  //doc2["tempPV"] = tempPV;
+  client.publish("sensorOutSV1", buffer, n);
+  doc2["luxSV"] = luxSV;
+  doc2["irSV"] = irSV;
+  doc2["fullSV"] = fullSV;
+  doc2["visSV"] = visSV;
   //doc2["TurbPV"] = TurbPV;
   //doc2["co2InPV"] = co2InPV;
   //doc2["co2OutPV"] = co2OutPV;
   //doc2["presPV"] = presPV;
-  char buffer[256];
-  size_t n = serializeJson(doc2, buffer);
-  client.publish("sensorOutPV2", buffer, n);
-  doc3["luxSV"] = luxSV;
-  doc3["phSV"] = phSV;
-  doc3["doSV"] = doSV;
-  doc3["tempSV"] = tempSV;
-  doc3["TurbSV"] = TurbSV;
-  doc3["co2InSV"] = co2InSV;
-  doc3["co2OutSV"] = co2OutSV;
-  doc3["presSV"] = presSV;
-  n = serializeJson(doc3, buffer);
-  client.publish("sensorOutSV1", buffer, n);
+  buffer[256];
+  n = serializeJson(doc2, buffer);
+  client.publish("sensorOutSV2", buffer, n);
+  //doc3["luxSV"] = luxSV;
+  //doc3["phSV"] = phSV;
+  //doc3["doSV"] = doSV;
+  // doc3["tempSV"] = tempSV;
+  //doc3["TurbSV"] = TurbSV;
+  //doc3["co2InSV"] = co2InSV;
+  //doc3["co2OutSV"] = co2OutSV;
+  //doc3["presSV"] = presSV;
+  // n = serializeJson(doc3, buffer);
+  ///client.publish("sensorOutSV1", buffer, n);
+}
+
+/////////////////////////////////////////////////////////
+//             Request EZO meter readings               //
+//////////////////////////////////////////////////////////
+float RequestMeterData(const int ezoAdd) {
+  //currentMillis = millis();
+  //if(currentMillis - previousMillis > interval) {
+  float ezoReading;
+  previousMillis = currentMillis;
+  sendCommand(ezoAdd, 'r', 20);
+  delay(readingDelay);                                  //if it is the sleep command, we do nothing. Issuing a sleep command and then requesting data will wake the RTD circuit.
+  return ezoReading = readMeter(ezoAdd, 20, 1);
+
+}
+
+//////////////////////////////////////////////////////////
+//              Read EZO meter reading                  //
+//////////////////////////////////////////////////////////
+float readMeter(const int WireAdd, const int cmd, const int responseSize)  {
+  char dataStorage[20];
+  byte i = 0;
+  Wire.requestFrom(WireAdd, cmd, responseSize);  //call the circuit and request 20 bytes (this may be more than we need)
+  int code = Wire.read();
+
+  while (Wire.available()) {
+    byte in_char = Wire.read();
+    dataStorage[i] = in_char;           //load byte into our array.
+    i += 1;                             //next bit.
+    if (in_char == 0) {                 //throw null error.
+      i = 0;                            //reset the counter i to 0.
+      break;                            //exit
+    }
+  }
+  float datafloat = atof(dataStorage);
+  return datafloat;
+}
+//////////////////////////////////////////////////////////
+//              Send Request for data                   //
+//////////////////////////////////////////////////////////
+void sendCommand (const int WireAdd, const byte cmd, const int responseSize)  {
+  Wire.beginTransmission (WireAdd);
+  Wire.write (cmd);
+  Wire.endTransmission ();
+
+  if (WireAdd != PHmeterAdd) {
+    Wire.requestFrom (WireAdd, responseSize);
+  }
+}
+
+void readLight() {
+  uint32_t lum = tsl.getFullLuminosity();
+  uint16_t ir, full;
+  ir = lum >> 16;
+  full = lum & 0xFFFF;
+  irSV = ir;
+  visSV = full;
+  fullSV = full - ir;
+  luxSV = tsl.calculateLux(full, ir);
+}
+
+int readCO2UART() {
+  byte cmd[9] = {0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79};
+  byte response[9]; // for answer
+
+  Serial2.write(cmd, 9); //request PPM CO2
+
+  // clear the buffer
+  memset(response, 0, 9);
+  int i = 0;
+  while (Serial2.available() == 0) {
+    delay(1000);
+    i++;
+  }
+  if (Serial2.available() > 0) {
+    Serial2.readBytes(response, 9);
+  }
+  /*
+    for (int i = 0; i < 9; i++) {
+    Serial.print(String(response[i], HEX));
+    Serial.print("   ");
+    }
+    Serial.println("");*/
+  // ppm
+  int ppm_uart = 256 * (int)response[2] + response[3];
+  // temp
+  byte temp = response[4] - 40;
+  return ppm_uart;
+}
+
+void readInputs() {
+
+  float turbValue = analogRead(turbPin);
+
+  
 }

@@ -95,6 +95,13 @@ StaticJsonDocument<256> sensorOutPV2;
 int wlIn = 0;
 float co2Out = 100, co2In;
 
+
+const size_t capacityin = JSON_OBJECT_SIZE(2) + 20;
+DynamicJsonDocument docin(capacityin);
+
+const char* json [capacityin];// = "{\"sensor\":23.2,\"time\":1351824120}";
+
+
 WiFiClient espClient;
 PubSubClient client(espClient);
 
@@ -548,7 +555,8 @@ String splitHrMin(String data, char separator, int index)
 }
 
 void upDateBrain()  {
-  if (Serial2.available()) {
+
+  if (Serial2.available() > 0) {
     const size_t brainCap = JSON_OBJECT_SIZE(27);
     DynamicJsonDocument brain(brainCap);
     brain["lp1_1"] = lp1_1;
@@ -587,12 +595,6 @@ void upDateBrain()  {
 
     serializeJson(brain, Serial2);
     Serial2.println();
-
-    const size_t capacityin = JSON_OBJECT_SIZE(2) + 20;
-    DynamicJsonDocument docin(capacityin);
-
-    const char* json [capacityin];// = "{\"sensor\":23.2,\"time\":1351824120}";
-
     deserializeJson(docin, Serial2);
 
     co2In = docin["sensor"]; // 23.2
