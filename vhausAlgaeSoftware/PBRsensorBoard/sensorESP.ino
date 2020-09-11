@@ -97,7 +97,9 @@ void setup() {
   {
     while (1);
   }
-
+  
+  pinMode(35, INPUT);
+  
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
 
@@ -314,13 +316,7 @@ void readInputs() {
   //sprintf(a, "raw: %f  Val: %f  Map: %f  NTU: %f", turbRaw, turbValue, turbMap, TurbSV);
   //Serial.println(a);
 
-  int waterLevelRead = digitalRead(35);
-  if (waterLevelRead == HIGH) {
-    wlPV = 0;
-  } else {
-    wlPV = 1;
-  }
+  wlPV = digitalRead(35);
 
-  
 
 }
