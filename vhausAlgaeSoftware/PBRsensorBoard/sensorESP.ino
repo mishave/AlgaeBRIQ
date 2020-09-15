@@ -10,6 +10,13 @@ AHT20 humiditySensor;
 #include <PubSubClient.h>
 #include <WiFiManager.h>
 #include <Wire.h>
+#include <OneWire.h>
+
+int DS18S20_Pin = 32; //DS18S20 Signal pin on digital 2
+//Temperature chip i/o
+OneWire ds(DS18S20_Pin);  // on digital pin 2
+byte coil1Add[] = { 0x28, 0xE4, 0xDF, 0x58, 0x3A, 0x19, 0x1, 0xAA };
+byte coil2Add[] = { 0x28, 0x25, 0x72, 0x43, 0x3A, 0x19, 0x1, 0x71 };
 
 #define RXD2 16
 #define TXD2 17
@@ -26,7 +33,7 @@ const int readingDelay = 800;
 
 float phSV, rtdPV, doSV, tempSV, TurbSV, humSV;
 int co2OutSV, wlPV;
-float luxSV, irSV, fullSV, visSV;
+float luxSV, irSV, fullSV, visSV, coil1PV, coil2PV;
 
 
 //Input setup
@@ -91,15 +98,16 @@ void setup() {
 
   Wire.begin();
 
-  configureSensor();
+  //configureSensor();
 
-  if (humiditySensor.begin() == false)
-  {
-    while (1);
-  }
-  
+  //if (humiditySensor.begin() == false)
+  //{
+  //Serial.println("KIK");
+  //while (1);
+  //}
+
   pinMode(35, INPUT);
-  
+
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);
 
@@ -149,18 +157,22 @@ void configureSensor(void)
 }
 
 void loop() {
+
   phSV = RequestMeterData(PHmeterAdd);
   rtdPV = RequestMeterData(RTDmeterAdd);
   doSV = RequestMeterData(DOmeterAdd);
-  readLight();
-  if (humiditySensor.available() == true)
-  {
-    tempSV = humiditySensor.getTemperature();
-    humSV = humiditySensor.getHumidity();
-  }
+  //readLight();
+  //if (humiditySensor.available() == true)
+  //{
+  // tempSV = humiditySensor.getTemperature();
+  // humSV = humiditySensor.getHumidity();
+  // }
   co2OutSV = readCO2UART();
 
   readInputs();
+  coil1PV = getTemp(coil1Add);
+  coil2PV = getTemp(coil2Add);
+
 
 
   if (!client.connected()) {
@@ -192,8 +204,8 @@ void packetUpDate() {
   doc2["fullSV"] = fullSV;
   doc2["visSV"] = visSV;
   doc2["wlPV"] = wlPV;
-  //doc2["co2InPV"] = co2InPV;
-  //doc2["co2OutPV"] = co2OutPV;
+  doc2["coil1PV"] = coil1PV;
+  doc2["coil2PV"] = coil2PV;
   //doc2["presPV"] = presPV;
   buffer[256];
   n = serializeJson(doc2, buffer);
@@ -317,5 +329,30 @@ void readInputs() {
 
   wlPV = digitalRead(35);
 
+
+}
+
+float getTemp(byte addr[]) {
+  byte data[12];
+  ds.reset();
+  ds.select(addr);
+  ds.write(0x44, 1); // start conversion, with parasite power on at the end
+
+  byte present = ds.reset();
+  ds.select(addr);
+  ds.write(0xBE); // Read Scratchpad
+
+
+  for (int i = 0; i < 9; i++) { // we need 9 bytes
+    data[i] = ds.read();
+  }
+
+  byte MSB = data[1];
+  byte LSB = data[0];
+
+  float tempRead = ((MSB << 8) | LSB); //using two's compliment
+  float TemperatureSum = tempRead / 16;
+
+  return TemperatureSum;
 
 }
