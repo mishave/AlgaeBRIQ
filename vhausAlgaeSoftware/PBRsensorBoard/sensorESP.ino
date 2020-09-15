@@ -186,7 +186,7 @@ void packetUpDate() {
   doc1["humSV"] = humSV;
   char buffer[256];
   size_t n = serializeJson(doc1, buffer);
-  client.publish("sensorOutSV1", buffer, n);
+  client.publish("sensorOutPV1", buffer, n);
   doc2["luxSV"] = luxSV;
   doc2["irSV"] = irSV;
   doc2["fullSV"] = fullSV;
@@ -197,7 +197,7 @@ void packetUpDate() {
   //doc2["presPV"] = presPV;
   buffer[256];
   n = serializeJson(doc2, buffer);
-  client.publish("sensorOutSV2", buffer, n);
+  client.publish("sensorOutPV2", buffer, n);
   //doc3["luxSV"] = luxSV;
   //doc3["phSV"] = phSV;
   //doc3["doSV"] = doSV;
@@ -279,7 +279,6 @@ int readCO2UART() {
   memset(response, 0, 9);
   int i = 0;
   while (Serial2.available() == 0) {
-    delay(1000);
     i++;
   }
   if (Serial2.available() > 0) {
