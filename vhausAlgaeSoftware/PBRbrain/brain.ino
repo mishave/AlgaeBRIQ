@@ -87,7 +87,6 @@ void loop() {
   servoControl();
   heatCool();
   airWaterPumps();
-  readInputs();
 }
 
 void readBrainESP() {
@@ -225,9 +224,3 @@ void airWaterPumps()  {
   }
 }
 
-
-void readInputs() {
-  
-  co2in = digitalRead(A0);
-  
-}

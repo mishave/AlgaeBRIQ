@@ -34,9 +34,9 @@ int checkAM = 0;
 
 //Water Level Check
 unsigned long pbrWaterLowMillis, pbrWaterFullMillis;
-unsigned long lastPumpOn = 0, pumpOnDelay = 100;
-unsigned long lastPumpOff = 0, pumpOffDelay = 100;
-int pumpOnCheck = 0;
+unsigned long lastPumpOn = 0, pumpOnDelay = 10;
+unsigned long lastPumpOff = 0, pumpOffDelay = 10;
+int pumpOnCheck = 0, lastPumpCheck;
 
 //Light cycle check
 int LightOnCheck = 0;
@@ -94,13 +94,6 @@ int press_valve_svLast, dump1_valve_svLast, dump2_valve_svLast;
 StaticJsonDocument<256> sensorOutPV2;
 int wlIn = 0;
 float co2Out = 100, co2In;
-
-
-const size_t capacityin = JSON_OBJECT_SIZE(2) + 20;
-DynamicJsonDocument docin(capacityin);
-
-const char* json [capacityin];// = "{\"sensor\":23.2,\"time\":1351824120}";
-
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -297,7 +290,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   //Read Sensor Board Data
   if (topicStr == "sensorOutPV2") {
     deserializeJson(sensorOutPV2, payload, length);
-    wlIn = sensorOutPV2["wlIn"];
+    wlIn = sensorOutPV2["wlPV"];
     co2Out = sensorOutPV2["co2Out"];
   }
   if (topicStr == "pbrTime") pbrTimeStr = payloadStr;
@@ -393,6 +386,10 @@ void reconnect() {
       client.subscribe("pbrLightStartMinuet");
       client.subscribe("pbrTime");
 
+      //ReadSensorBoard Data
+      client.subscribe("sensorOutPV1");
+      client.subscribe("sensorOutPV2");
+      //client.subscribe("pbrLightStartMinuet");
     }
     else {
       Serial.print("failed, rc=");
@@ -595,11 +592,6 @@ void upDateBrain()  {
 
     serializeJson(brain, Serial2);
     Serial2.println();
-    deserializeJson(docin, Serial2);
-
-    co2In = docin["sensor"]; // 23.2
-    long time2 = docin["time"]; // 1351824120
-
   }
 }
 
@@ -822,35 +814,48 @@ void checkAir() {
 }
 
 void checkWaterLevel()  {
+
   if (startCycleFlag == 1 && pumpOnCheck == 0) {
     client.publish("pbr/doseAM/status", "ON"), doseAM = 1;
     client.publish("pbr/topUp/status", "OFF"), topUp = 0;
     pumpOnCheck = 1;
+    lastPumpCheck = 3;
   }
-  else if (startCycleFlag == 1 && pumpOnCheck == 1) {
-    if (wlIn == 0) {
+  if (startCycleFlag == 1 && pumpOnCheck == 1 && doseAM == 0) {
+    pumpOnCheck = 2;
+  }
+  if (startCycleFlag == 1 && pumpOnCheck == 2 && doseAM == 1) {
+    pumpOnCheck = 0;
+  }
+
+  if (startCycleFlag == 1 && pumpOnCheck == 1 && doseAM == 1) {
+    //water low
+    if (wlIn == 0 && pumpOnCheck == 1 && doseAM == 1) {
       pbrWaterLowMillis = millis();
       if (pbrWaterLowMillis - lastPumpOn >= pumpOnDelay) {
         lastPumpOn = pbrWaterLowMillis;
         topUp = 1;
-        if (pumpOnCheck == 1) {
+        if (lastPumpCheck != 0) {
           client.publish("pbr/topUp/status", "ON");
-          pumpOnCheck = 2;
+          lastPumpCheck = 0;
         }
       }
     }
-    else if (wlIn == 1) {
+    //water high
+    if (wlIn == 1 && pumpOnCheck == 1 && doseAM == 1) {
       pbrWaterFullMillis = millis();
       if (pbrWaterFullMillis - lastPumpOff >= pumpOffDelay) {
         lastPumpOff = pbrWaterFullMillis;
         topUp = 0;
-        if (pumpOnCheck == 2) {
+        if (lastPumpCheck != 1) {
           client.publish("pbr/topUp/status", "OFF");
-          pumpOnCheck = 1;
+          lastPumpCheck = 1;
         }
       }
     }
   }
+
+
 }
 
 void checkLighting()  {
