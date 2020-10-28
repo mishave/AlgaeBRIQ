@@ -6,29 +6,9 @@ Software design based in Visual Studio Code Using Arduino and RaspberryPi 4.
 
 ## Software 
 ### Setup
-- Clone vhausAlage repo
-- Point eagle program directories at corresponding vhausAlgae repo
-
-### Projects
-- Create project directory structure
-- Follow naming conventions
-- Use standard docframe
-- Add design blocks on standard grid
-- Connect design blocks
-
-### Parts
-- Create part in logical group
-- Follow naming conventions
-- Add description using Digikey scraper
-- Add required attributes
-- Add standard name, value, & orientation
-
-### Design Blocks
-- Build on standard grid
-- Add standard artwork
-- Add standard signal interface
-- Follow naming conventions
-
-### Manufacturing Files
-- Run CAM processor job
-- Run BOM generation script
+The software will require:
+- 1 RasberryPi
+- 3 ESP32 WROOMS 32D Microcontrollers
+- Arduino Mega
+- Sensor PCB
+- Brain PCB
