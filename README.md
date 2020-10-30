@@ -7,7 +7,7 @@ Algae photobioreactor(PBR) platform - Focused on algae as potential food sources
   <img src="https://github.com/mishave/vhausAlgae/blob/master/vhausAlageMechanical/Misc/systemOverview.PNG" />
 </p>
 
-## Design Overview
+## Design Overview :v:
 ### Cultivation
 - Close loop design
 - 5.8L capacity
@@ -34,7 +34,7 @@ Algae photobioreactor(PBR) platform - Focused on algae as potential food sources
   - AppDaemon - Python
 - Google Sheets API
 
-## Next Steps
+## Next Steps :point_up:
 - [ ] Transfer PCB from Eagle to KiCad
 - [ ] Add heating to tempreture control
 - [ ] Remove Arduino Mega
