@@ -11,17 +11,17 @@ Algae photobioreactor(PBR) platform - Focused on algae as potential food sources
 ### Cultivation
 - Close loop design
 - 5.8L capacity
-Sensing: 
-- pH
-- Water Temperature
-- Dissolved Oxygen
-- Lux
-- Water Level
-- External Temperature & Humidity
-Control:
-- pH up/Down
-- Culture Temperature
-- Light Cycle & Intensity
+- Sensing: 
+  - pH
+  - Water Temperature
+  - Dissolved Oxygen
+  - Lux
+  - Water Level
+  - External Temperature & Humidity
+- Control:
+  - pH up/Down
+  - Culture Temperature
+  - Light Cycle & Intensity
 
 
 ### Harvesting
