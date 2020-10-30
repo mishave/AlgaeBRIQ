@@ -7,12 +7,24 @@ Algae photobioreactor(PBR) platform - Focused on algae as potential food sources
   <img src="https://github.com/mishave/vhausAlgae/blob/master/vhausAlageMechanical/Misc/systemOverview.PNG" />
 </p>
 
-## Electrical Design
-### Setup
-- Clone vhausAlgae repo
-- Point eagle program directories at corresponding vhausAlgae repo
+## Design Overview
+### Cultivation
+- Close loop design
+- 5.8L capacity
+- Sensing: 
+- - pH
+- - Water Temperature
+- - Dissolved Oxygen
+- - Lux
+- - Water Level
+- - External Temperature & Humidity
+- Control:
+- - pH up/Down
+- - Culture Temperature
+- - Light Cycle & Intensity
 
-### Projects
+
+### Harvesting
 - Create project directory structure
 - Follow naming conventions
 - Use standard docframe
