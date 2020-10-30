@@ -1,10 +1,11 @@
 
 # Vhaus.Tech Algae PBR
-Body of electrical hardware to go with the brain software.
-Electrical design based in Eagle. Mechanical design based in Fusion 360.
+Algae photobioreactor(PBR) platform - Focused on algae as potential food sources or means for small scale carbon sequestration, apposed to biofuel, the project hopes to provide the starting point for collaboration, to bring PBR technology out of the lab and into our everyday lives. 
 
 *WORK IN PROGRESS*
-![name-of-you-image](https://github.com/mishave/vhausAlgae/blob/master/vhausAlageMechanical/Misc/systemOverview.PNG)
+<p align="center">
+  <img src="https://github.com/mishave/vhausAlgae/blob/master/vhausAlageMechanical/Misc/systemOverview.PNG" />
+</p>
 
 ## Electrical Design
 ### Setup
