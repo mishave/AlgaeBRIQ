@@ -35,6 +35,6 @@ Algae photobioreactor(PBR) platform - Focused on algae as potential food sources
 - Google Sheets API
 
 ## Next Steps :point_up:
-- [ ] Transfer PCB from Eagle to KiCad
+- [ ] Transfer drawings from Eagle to KiCad
 - [ ] Add heating to tempreture control
 - [ ] Remove Arduino Mega
