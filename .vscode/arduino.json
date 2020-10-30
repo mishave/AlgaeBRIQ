@@ -1,7 +1,0 @@
-{
-    "programmer": "AVRISP mkII",
-    "board": "arduino:avr:mega",
-    "configuration": "cpu=atmega2560",
-    "port": "COM4",
-    "sketch": "vhausAlgaeSoftware\\PBRbrain\\PBRbrain.ino"
-}
