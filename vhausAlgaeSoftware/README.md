@@ -1,8 +1,11 @@
-# Vhaus.Tech Algae Body
-Body of electrical hardware to go with the brain software.
-Software design based in Visual Studio Code Using Arduino and RaspberryPi 4.
+# Vhaus.Tech Algae Software
+Software based Home Assistant using RaspberryPi 4.
 
 *WORK IN PROGRESS*
+
+<p align="center">
+  <img src="https://github.com/mishave/vhausAlgae/blob/master/vhausAlageMechanical/Misc/HomePageSnapShot.png" />
+</p>
 
 ## Software 
 ### Setup
