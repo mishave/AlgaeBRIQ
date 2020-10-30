@@ -1,6 +1,6 @@
 
 # Vhaus.Tech Algae Brain
-Brains fo the operation - The brain ESP board is what houses the code to run routines.
+Brains of the operation - The brain ESP board is what houses the code to run routines.
 
 *WORK IN PROGRESS*
 
