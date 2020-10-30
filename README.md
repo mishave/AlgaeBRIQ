@@ -4,8 +4,7 @@ Body of electrical hardware to go with the brain software.
 Electrical design based in Eagle. Mechanical design based in Fusion 360.
 
 *WORK IN PROGRESS*
-
-
+![name-of-you-image](https://github.com/mishave/vhausAlgae/blob/master/vhausAlageMechanical/Misc/systemOverview.PNG)
 
 ## Electrical Design
 ### Setup
