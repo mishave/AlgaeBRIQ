@@ -25,25 +25,11 @@ Algae photobioreactor(PBR) platform - Focused on algae as potential food sources
 
 
 ### Harvesting
-- Create project directory structure
-- Follow naming conventions
-- Use standard docframe
-- Add design blocks on standard grid
-- Connect design blocks
+- 15L capacity
+- crossflow filter
 
-### Parts
-- Create part in logical group
-- Follow naming conventions
-- Add description using Digikey scraper
-- Add required attributes
-- Add standard name, value, & orientation
-
-### Design Blocks
-- Build on standard grid
-- Add standard artwork
-- Add standard signal interface
-- Follow naming conventions
-
-### Manufacturing Files
-- Run CAM processor job
-- Run BOM generation script
+### Software
+- Home Assistant
+  - Mosquitto broker - MQTT
+  - AppDaemon - Python
+- Google Sheets API
