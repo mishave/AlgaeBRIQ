@@ -1,0 +1,360 @@
+#Bluk of Automations are being used to update input_numbers via MQTT
+
+# This automation script runs when a value is received via MQTT on retained topic: setTemperature
+# It sets the value slider on the GUI. This slides also had its own automation when the value is changed.
+  - alias: Set Lux SV
+    trigger:
+      platform: mqtt
+      topic: 'luxSV'
+    condition:
+      condition: template
+      value_template: "{{ trigger.payload | float != states('input_number.lux_sv') | float }}"
+    action:
+      service: input_number.set_value
+      data_template:
+        entity_id: input_number.lux_sv
+        value: "{{ trigger.payload }}"
+# This second automation script runs when the target temperature slider is moved. publishing to the same MQTT topic it is also subscribed to.
+  - alias: Update Lux SV
+    trigger:
+      platform: state
+      entity_id: input_number.lux_sv
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'luxSV'
+        retain: true
+        payload: "{{ states('input_number.lux_sv') | float }}"
+
+  - alias: Set pH SV
+    trigger:
+      platform: mqtt
+      topic: 'phSV'
+    condition:
+      condition: template
+      value_template: "{{ trigger.payload | float != states('input_number.ph_sv') | float }}"
+    action:
+      service: input_number.set_value
+      data_template:
+        entity_id: input_number.ph_sv
+        value: "{{ trigger.payload }}"
+  - alias: Update pH SV
+    trigger:
+      platform: state
+      entity_id: input_number.ph_sv
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'phSV'
+        retain: true
+        payload: "{{ states('input_number.ph_sv') | float }}"
+
+  - alias: Set doSV
+    trigger:
+      platform: mqtt
+      topic: 'doSV'
+    condition:
+      condition: template
+      value_template: "{{ trigger.payload | float != states('input_number.do_sv') | float }}"
+    action:
+      service: input_number.set_value
+      data_template:
+        entity_id: input_number.do_sv
+        value: "{{ trigger.payload }}"
+  - alias: Update doSV
+    trigger:
+      platform: state
+      entity_id: input_number.do_sv
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'doSV'
+        retain: true
+        payload: "{{ states('input_number.do_sv') | float }}"
+
+  - alias: Set tempSV
+    trigger:
+      platform: mqtt
+      topic: 'tempSV'
+    condition:
+      condition: template
+      value_template: "{{ trigger.payload | float != states('input_number.temp_sv') | float }}"
+    action:
+      service: input_number.set_value
+      data_template:
+        entity_id: input_number.temp_sv
+        value: "{{ trigger.payload }}"
+  - alias: Update tempSV
+    trigger:
+      platform: state
+      entity_id: input_number.temp_sv
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'tempSV'
+        retain: true
+        payload: "{{ states('input_number.temp_sv') | float }}"
+
+  - alias: Set presSV
+    trigger:
+      platform: mqtt
+      topic: 'presSV'
+    condition:
+      condition: template
+      value_template: "{{ trigger.payload | float != states('input_number.pressure_sv') | float }}"
+    action:
+      service: input_number.set_value
+      data_template:
+        entity_id: input_number.pressure_sv
+        value: "{{ trigger.payload }}"
+  - alias: Update presSV
+    trigger:
+      platform: state
+      entity_id: input_number.pressure_sv
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'presSV'
+        retain: true
+        payload: "{{ states('input_number.pressure_sv') | float }}"
+#################################################################################
+#                                                                               #
+#                          Update Servo Value SV                                #
+#                                                                               #
+#################################################################################        
+
+  - alias: Set press_valve_sv
+    trigger:
+      platform: mqtt
+      topic: 'press_valve_sv'
+    condition:
+      condition: template
+      value_template: "{{ trigger.payload | int != states('input_number.press_valve_sv') | int }}"
+    action:
+      service: input_number.set_value
+      data_template:
+        entity_id: input_number.press_valve_sv
+        value: "{{ trigger.payload }}"
+  - alias: Update press_valve_sv
+    trigger:
+      platform: state
+      entity_id: input_number.press_valve_sv
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'press_valve_sv'
+        retain: true
+        payload: "{{ states('input_number.press_valve_sv') | int }}"
+        
+  - alias: Set dump1_valve_sv
+    trigger:
+      platform: mqtt
+      topic: 'dump1_valve_sv'
+    condition:
+      condition: template
+      value_template: "{{ trigger.payload | int != states('input_number.dump1_valve_sv') | int }}"
+    action:
+      service: input_number.set_value
+      data_template:
+        entity_id: input_number.dump1_valve_sv
+        value: "{{ trigger.payload }}"
+  - alias: Update dump1_valve_sv
+    trigger:
+      platform: state
+      entity_id: input_number.dump1_valve_sv
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'dump1_valve_sv'
+        retain: true
+        payload: "{{ states('input_number.dump1_valve_sv') | int }}"
+
+  - alias: Set dump2_valve_sv
+    trigger:
+      platform: mqtt
+      topic: 'dump2_valve_sv'
+    condition:
+      condition: template
+      value_template: "{{ trigger.payload | int != states('input_number.dump2_valve_sv') | int }}"
+    action:
+      service: input_number.set_value
+      data_template:
+        entity_id: input_number.dump2_valve_sv
+        value: "{{ trigger.payload }}"
+  - alias: Update dump2_valve_sv
+    trigger:
+      platform: state
+      entity_id: input_number.dump2_valve_sv
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'dump2_valve_sv'
+        retain: true
+        payload: "{{ states('input_number.dump2_valve_sv') | int }}"
+#################################################################################
+#                                                                               #
+#                          Update Servo Open/Close Pos.                         #
+#                                                                               #
+#################################################################################
+  - alias: Press Open moved
+    trigger:
+      platform: state
+      entity_id: input_number.press_open
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'pbrPressOpen'
+        retain: true
+        payload: "{{ states('input_number.press_open') | int }}"
+  - alias: Press close moved
+    trigger:
+      platform: state
+      entity_id: input_number.press_close
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'pbrPressClose'
+        retain: true
+        payload: "{{ states('input_number.press_close') | int }}"
+
+  - alias: dump1 Open moved
+    trigger:
+      platform: state
+      entity_id: input_number.dump1_open
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'pbrDump1Open'
+        retain: true
+        payload: "{{ states('input_number.dump1_open') | int }}"
+  - alias: dump1 close moved
+    trigger:
+      platform: state
+      entity_id: input_number.dump1_close
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'pbrDump1Close'
+        retain: true
+        payload: "{{ states('input_number.dump1_close') | int }}"
+
+  - alias: dump2 Open moved
+    trigger:
+      platform: state
+      entity_id: input_number.dump2_open
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'pbrDump2Open'
+        retain: true
+        payload: "{{ states('input_number.dump2_open') | int }}"
+  - alias: dump2 close moved
+    trigger:
+      platform: state
+      entity_id: input_number.dump2_close
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'pbrDump2Close'
+        retain: true
+        payload: "{{ states('input_number.dump2_close') | int }}"
+#################################################################################
+#                                                                               #
+#                               Set Cycle Length                                #
+#                                                                               #
+#################################################################################
+  - alias: Week slider moved
+    trigger:
+      platform: state
+      entity_id: input_number.pbr_cycle_weeks
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'pbrCycleWeeks'
+        retain: true
+        payload: "{{ states('input_number.pbr_cycle_weeks') | int }}"
+        
+  - alias: Day slider moved
+    trigger:
+      platform: state
+      entity_id: input_number.pbr_cycle_days
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'pbrCycleDays'
+        retain: true
+        payload: "{{ states('input_number.pbr_cycle_days') | int }}"
+  - alias: Hour slider moved
+    trigger:
+      platform: state
+      entity_id: input_number.pbr_cycle_hours
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'pbrCycleHours'
+        retain: true
+        payload: "{{ states('input_number.pbr_cycle_hours') | int }}"
+  - alias: Minuet slider moved
+    trigger:
+      platform: state
+      entity_id: input_number.pbr_cycle_minuets
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'pbrCycleMinuets'
+        retain: true
+        payload: "{{ states('input_number.pbr_cycle_minuets') | int }}"
+
+#################################################################################
+#                                                                               #
+#                               Set Light Cycle                                 #
+#                                                                               #
+#################################################################################
+  - alias: Light Hour On slider moved
+    trigger:
+      platform: state
+      entity_id: input_number.pbr_light_hours
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'pbrLightOnHours'
+        retain: true
+        payload: "{{ states('input_number.pbr_light_hours') | int }}"
+
+  - alias: Light Hour Start slider moved
+    trigger:
+      platform: state
+      entity_id: input_number.pbr_light_start_hours
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'pbrLightStartHour'
+        retain: true
+        payload: "{{ states('input_number.pbr_light_start_hours') | int }}"
+  - alias: Light Minuet Start slider moved
+    trigger:
+      platform: state
+      entity_id: input_number.pbr_light_start_minuets
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'pbrLightStartMinuet'
+        retain: true
+        payload: "{{ states('input_number.pbr_light_start_minuets') | int }}"
+
+#################################################################################
+#                                                                               #
+#                               Send real time                                  #
+#                                                                               #
+#################################################################################
+  - alias: send time
+    trigger:
+      platform: time_pattern
+      seconds: '/10'
+    action:
+      service: mqtt.publish
+      data_template:
+        topic: 'pbrTime'
+        retain: true
+        payload: "{{ states('sensor.time') }}"
+
