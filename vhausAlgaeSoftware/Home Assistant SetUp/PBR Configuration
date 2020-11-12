@@ -1,0 +1,536 @@
+
+# Configure a default setup of Home Assistant (frontend, api, etc)
+default_config:
+
+# Text to speech
+tts:
+  - platform: google_translate
+
+group: !include groups.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+
+mqtt:
+    broker: 192.168.0.200
+    username: !secret mqttUserName
+    password: !secret mqttPassword
+    
+switch:
+  - platform: mqtt
+    name: "Cycle Auto/Manual"
+    state_topic: "pbr/pbrAM/status"
+    command_topic: "pbr/pbrAM/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+  - platform: mqtt
+    name: "Cycle Start/Stop"
+    state_topic: "pbr/pbrSS/status"
+    command_topic: "pbr/pbrSS/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+  - platform: mqtt
+    name: "Lighting Auto/Manual"
+    state_topic: "pbr/lightAM/status"
+    command_topic: "pbr/lightAM/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false    
+  - platform: mqtt
+    name: "Light Panel 1"
+    state_topic: "pbr/lp1/status"
+    command_topic: "pbr/lp1/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+  - platform: mqtt
+    name: "Light Panel 1_1"
+    state_topic: "pbr/lp1_1/status"
+    command_topic: "pbr/lp1_1/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+  - platform: mqtt
+    name: "Light Panel 1_2"
+    state_topic: "pbr/lp1_2/status"
+    command_topic: "pbr/lp1_2/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+  - platform: mqtt
+    name: "Light Panel 1_3"
+    state_topic: "pbr/lp1_3/status"
+    command_topic: "pbr/lp1_3/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+  - platform: mqtt
+    name: "Light Panel 1_4"
+    state_topic: "pbr/lp1_4/status"
+    command_topic: "pbr/lp1_4/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+#Lighting Control
+  - platform: mqtt
+    name: "Light Panel 2"
+    state_topic: "pbr/lp2/status"
+    command_topic: "pbr/lp2/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+  - platform: mqtt
+    name: "Light Panel 2_1"
+    state_topic: "pbr/lp2_1/status"
+    command_topic: "pbr/lp2_1/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+  - platform: mqtt
+    name: "Light Panel 2_2"
+    state_topic: "pbr/lp2_2/status"
+    command_topic: "pbr/lp2_2/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+  - platform: mqtt
+    name: "Light Panel 2_3"
+    state_topic: "pbr/lp2_3/status"
+    command_topic: "pbr/lp2_3/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+  - platform: mqtt
+    name: "Light Panel 2_4"
+    state_topic: "pbr/lp2_4/status"
+    command_topic: "pbr/lp2_4/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+#Chiller/Heater Control
+  - platform: mqtt
+    name: "Chiller Auto/Manual"
+    state_topic: "pbr/chillAM/status"
+    command_topic: "pbr/chillAM/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+  - platform: mqtt
+    name: "Chiller On/Off"
+    state_topic: "pbr/chillSS/status"
+    command_topic: "pbr/chillSS/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+  - platform: mqtt
+    name: "Cooling On/Off"
+    state_topic: "pbr/chillOn/status"
+    command_topic: "pbr/chillOn/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+  - platform: mqtt
+    name: "Heating On/Off"
+    state_topic: "pbr/heatOn/status"
+    command_topic: "pbr/heatOn/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+#Air Control    
+  - platform: mqtt
+    name: "Air Auto/Manual"
+    state_topic: "pbr/airAM/status"
+    command_topic: "pbr/airAM/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+  - platform: mqtt
+    name: "Air On/Off"
+    state_topic: "pbr/airSS/status"
+    command_topic: "pbr/airSS/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+    
+  - platform: mqtt
+    name: "Dosing Auto/Manual"
+    state_topic: "pbr/doseAM/status"
+    command_topic: "pbr/doseAM/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+  - platform: mqtt
+    name: "pH Up"
+    state_topic: "pbr/phUp/status"
+    command_topic: "pbr/phUp/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+  - platform: mqtt
+    name: "pH Down"
+    state_topic: "pbr/phDown/status"
+    command_topic: "pbr/phDown/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+  - platform: mqtt
+    name: "Nutriant Mix"
+    state_topic: "pbr/nutMix/status"
+    command_topic: "pbr/nutMix/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+  - platform: mqtt
+    name: "Sample Pump"
+    state_topic: "pbr/samplePump/status"
+    command_topic: "pbr/samplePump/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+  - platform: mqtt
+    name: "Top Up"
+    state_topic: "pbr/topUp/status"
+    command_topic: "pbr/topUp/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+    
+  - platform: mqtt
+    name: "Harvest Auto/Manual"
+    state_topic: "pbr/harvestAM/status"
+    command_topic: "pbr/harvestAM/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+  - platform: mqtt
+    name: "Harvest Start/Stop"
+    state_topic: "pbr/harbestSS/status"
+    command_topic: "pbr/harbestSS/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+
+  - platform: mqtt
+    name: "Servo Auto/Manual"
+    state_topic: "pbr/servoAM/status"
+    command_topic: "pbr/servoAM/switch"
+    payload_on: "ON"
+    payload_off: "OFF"
+    optimistic: false
+
+#Value setting to be used for control
+input_number:
+#Button Reference Templates/Test numbers
+#  slider1:
+#    name: Slider
+#    initial: 0
+#    min: 0
+#    max: 255
+#    step: 1
+#  box1:
+#    name: Numeric Input Box
+#    initial: 22
+#    min: -20
+#    max: 99
+#    step: 0.1
+#    mode: box
+#Set Cycle Length Variables  
+  pbr_cycle_weeks:
+    name: Weeks
+    initial: 2
+    mode: box
+    min: 0
+    max: 52
+  pbr_cycle_days:
+    name: Days
+    initial: 0
+    mode: box
+    min: 0
+    max: 7
+  pbr_cycle_hours:
+    name: Hours
+    initial: 0
+    mode: box
+    min: 0
+    max: 24
+  pbr_cycle_minuets:
+    name: Minuets
+    initial: 0
+    mode: box
+    min: 0
+    max: 60
+#Set Lihgt cycle and starting time
+  pbr_light_hours:
+    name: Light On Hours
+    initial: 14
+    mode: box
+    min: 0
+    max: 24
+    
+  pbr_light_start_hours:
+    name: Starting Hour
+    initial: 7
+    mode: box
+    min: 0
+    max: 24
+  pbr_light_start_minuets:
+    name: Starting Minuet
+    initial: 0
+    mode: box
+    min: 0
+    max: 60
+    
+#Lighting Panel
+  lux_sv:
+    name: Lux sv
+    icon: mdi:lightbulb-on-outline
+    min: 0
+    max: 1000
+    mode: box
+#Conditions Panel
+  ph_sv:
+    name: pH sv
+    icon: mdi:water-check-outline
+    min: 4
+    max: 15
+    step: 0.1
+    mode: box
+  do_sv:
+    name: Do sv
+    icon: mdi:chart-bubble
+    min: -10
+    max: 1000
+    step: 0.1
+    mode: box
+  temp_sv:
+    name: Temp sv
+    icon: mdi:thermometer
+    min: 10
+    max: 30
+    step: 0.1
+    mode: box
+  turbity_sv:
+    name: Turbity sv
+    icon: mdi:virus-outline
+    min: -10
+    max: 1000
+    step: 0.1
+    mode: box
+#Temp Panel
+  coil1_sv:
+    min: -10
+    max: 1000
+    step: 0.1
+    mode: box
+  coil2_sv:
+    min: -10
+    max: 1000
+    step: 0.1
+    mode: box
+  chiller_temp_sv:
+    min: -10
+    max: 1000
+    step: 0.1
+    mode: box
+#Air Panel
+  co2_in_sv:
+    icon: mdi:molecule-co2
+    min: -10
+    max: 1000
+    step: 0.1
+    mode: box
+  co2_out_sv:
+    icon: mdi:molecule-co2
+    min: -10
+    max: 1000
+    step: 0.1
+    mode: box
+#Harvesting Panel
+  pressure_sv:
+    icon: mdi:gauge-full
+    min: 0
+    max: 100
+    step: 0.1
+    mode: box
+  press_valve_sv:
+    icon: mdi:gauge-full
+    min: 0
+    max: 100
+  press_open:
+    min: 0
+    max: 180
+    mode: box
+  press_close:
+    min: 0
+    max: 180
+    mode: box
+  dump1_valve_sv:
+    min: 0
+    max: 100
+  dump1_open:
+    min: 0
+    max: 180
+    mode: box
+  dump1_close:
+    min: 0
+    max: 180
+    mode: box
+  dump2_valve_sv:
+    min: 0
+    max: 100
+  dump2_open:
+    min: 0
+    max: 180
+    mode: box
+  dump2_close:
+    min: 0
+    max: 180
+    mode: box
+#Input Text for alarms and Status
+# No longer used - replaced with direct sensor reading - keep for future reference
+#input_text:
+# pbr_status:
+#    initial: ""
+#  pbr_alarm:
+#    initial: ""
+
+#Sensors Taken from MQTT
+#Need to relabel as PV
+sensor:
+  - platform: mqtt
+    name: testMessage
+    state_topic: "brainOutSV1"
+  - platform: mqtt
+    name: Lux
+    state_topic: "sensorOutPV2"
+    unit_of_measurement: 'lux'
+    value_template: "{{ value_json.luxSV }}"
+  - platform: mqtt
+    name: pH
+    state_topic: "sensorOutPV1"
+    unit_of_measurement: 'pH'
+    value_template: "{{ value_json.phSV }}"
+  - platform: mqtt
+    name: Disolved Oxygen
+    state_topic: "sensorOutPV1"
+    unit_of_measurement: 'DO' 
+    value_template: "{{ value_json.doSV }}"
+  - platform: mqtt
+    name: Culture Temperature
+    state_topic: "sensorOutPV1"
+    unit_of_measurement: '°C' 
+    value_template: "{{ value_json.rtdPV }}"
+  - platform: mqtt
+    name: Culture Turbidity
+    state_topic: "sensorOutPV1"
+    unit_of_measurement: 'NTU' 
+    value_template: "{{ value_json.TurbSV }}"
+  - platform: mqtt
+    name: CO2 In
+    state_topic: "sensorOutPV1"
+    unit_of_measurement: 'ppm' 
+    value_template: "{{ value_json.co2InSV }}"
+  - platform: mqtt
+    name: CO2 Out
+    state_topic: "sensorOutPV1"
+    unit_of_measurement: 'ppm' 
+    value_template: "{{ value_json.co2OutSV }}"
+  - platform: mqtt
+    name: Harvest Pressure
+    state_topic: "sensorOutSV1"
+    unit_of_measurement: 'bar' 
+    value_template: "{{ value_json.presSV }}"
+#Update user on PBR Status/Alarms
+  - platform: mqtt
+    name: PBR Status
+    state_topic: "brainStatus"
+    value_template: "{{ value_json.status }}"
+  - platform: mqtt
+    name: PBR Alarm
+    state_topic: "brainStatus"
+    value_template: "{{ value_json.alarm }}"
+    
+  - platform: mqtt
+    name: Coil One Temp
+    state_topic: "sensorOutPV2"
+    unit_of_measurement: 'bar' 
+    value_template: "{{ value_json.coil1PV }}"
+  - platform: mqtt
+    name: Coil Two Temp
+    state_topic: "sensorOutPV2"
+    unit_of_measurement: 'bar' 
+    value_template: "{{ value_json.coil2PV }}"
+
+  - platform: time_date
+    display_options:
+      - 'time'
+      - 'date'
+      - 'date_time'
+
+  - platform: mqtt
+    name: PBR Cycle Time
+    state_topic: "pbrCycleTime"
+    value_template: >-
+        {%- set uptime  = value_json.cycleTime | round -%}
+        {%- set sep     = ', ' -%}
+        {%- set TIME_MAP = {
+            'week': (uptime / 10080) % 10080,
+            'day': (uptime / 1440) % 7,
+            'hour': (uptime / 60) % 24,
+            'minute': (uptime % 60)
+        }
+        -%}
+
+        {%- for unit, duration in TIME_MAP.items() if duration >= 1 -%}
+            {%- if not loop.first -%}
+                {{ sep }}
+        {%- endif -%}
+          
+        {{ (duration | string).split('.')[0] }} {{ unit }}
+
+        {%- if duration >= 2 -%}
+          s
+        {%- endif -%}
+         {%- endfor -%}
+          {%- if uptime < 1 -%}
+        0
+        {%- endif -%}
+
+  - platform: mqtt
+    name: Cycle Remaining
+    state_topic: "pbrCycleLeft"
+    value_template: >-
+        {%- set uptime  = value_json.cycleLeft | round -%}
+        {%- set sep     = ', ' -%}
+        {%- set TIME_MAP = {
+            'week': (uptime / 10080) % 10080,
+            'day': (uptime / 1440) % 7,
+            'hour': (uptime / 60) % 24,
+            'minute': (uptime % 60)
+        }
+        -%}
+
+        {%- for unit, duration in TIME_MAP.items() if duration >= 1 -%}
+            {%- if not loop.first -%}
+                {{ sep }}
+        {%- endif -%}
+          
+        {{ (duration | string).split('.')[0] }} {{ unit }}
+
+        {%- if duration >= 2 -%}
+          s
+        {%- endif -%}
+         {%- endfor -%}
+          {%- if uptime < 1 -%}
+        0
+        {%- endif -%}
+
+
+#Keep as reference - Exsisting have been transfered to MQTT protocal, no longer needed
+#Haversting Panel
+#      pressure_sv:
+#        friendly_name: "pressure_sv"
+#        icon_template: mdi:gauge-full
+#        unit_of_measurement: "Bar"
+#        value_template: "{{ states('input_number.pressure_sv') }}"
