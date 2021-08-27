@@ -1,5 +1,5 @@
 
-# Vhaus.Tech Algae PBR
+# BRIQ Algae PBR
 Algae photobioreactor(PBR) platform - Focused on algae as potential food sources or means for small scale carbon sequestration, apposed to biofuel, the project hopes to provide the starting point for collaboration, to bring PBR technology out of the lab and into our everyday lives. 
 
 *WORK IN PROGRESS*
